@@ -35,7 +35,11 @@ fn main() {
     println!("cargo:rerun-if-env-changed=PORTAUDIO_ONLY_STATIC");
     if env::var("PORTAUDIO_ONLY_STATIC").is_err() {
         // If pkg-config finds a library on the system, we are done
-        if pkg_config::Config::new().atleast_version("19").find("portaudio-2.0").is_ok() {
+        if pkg_config::Config::new()
+            .atleast_version("19")
+            .find("portaudio-2.0")
+            .is_ok()
+        {
             return;
         }
     }
@@ -62,7 +66,7 @@ fn build() {
 fn err_to_panic<T, E: Display>(result: Result<T, E>) -> T {
     match result {
         Ok(x) => x,
-        Err(e) => panic!("{}", e)
+        Err(e) => panic!("{}", e),
     }
 }
 
@@ -76,14 +80,15 @@ fn run(command: &mut Command) {
 
 #[allow(dead_code)]
 mod unix_platform {
-    use std::process::Command;
     use std::path::Path;
+    use std::process::Command;
 
     use std::env;
 
     use super::{err_to_panic, run};
 
-    pub const PORTAUDIO_URL: &'static str = "http://www.portaudio.com/archives/pa_stable_v19_20140130.tgz";
+    pub const PORTAUDIO_URL: &'static str =
+        "http://www.portaudio.com/archives/pa_stable_v19_20140130.tgz";
     pub const PORTAUDIO_TAR: &'static str = "pa_stable_v19_20140130.tgz";
     pub const PORTAUDIO_FOLDER: &'static str = "portaudio";
 
@@ -114,24 +119,28 @@ mod unix_platform {
         err_to_panic(env::set_current_dir(".."));
 
         // cleaning portaudio sources
-        run(Command::new("rm").arg("-rf")
+        run(Command::new("rm")
+            .arg("-rf")
             .args(&[PORTAUDIO_TAR, PORTAUDIO_FOLDER]));
     }
 
     pub fn print_libs(out_dir: &Path) {
         let out_str = out_dir.to_str().unwrap();
-        println!("cargo:rustc-flags=-L native={}/lib -l static=portaudio", out_str);
+        println!(
+            "cargo:rustc-flags=-L native={}/lib -l static=portaudio",
+            out_str
+        );
     }
 }
 
 #[cfg(target_os = "linux")]
 mod platform {
-    use pkg_config;
-    use std::process::Command;
     use super::unix_platform;
+    use pkg_config;
     use std::path::Path;
+    use std::process::Command;
 
-    use super::{run, err_to_panic};
+    use super::{err_to_panic, run};
 
     pub fn download() {
         run(Command::new("wget").arg(unix_platform::PORTAUDIO_URL));
@@ -145,7 +154,11 @@ mod platform {
         let portaudio_pc_file = out_dir.join("lib/pkgconfig/portaudio-2.0.pc");
         let portaudio_pc_file = portaudio_pc_file.to_str().unwrap();
 
-        err_to_panic(pkg_config::Config::new().statik(true).find(portaudio_pc_file));
+        err_to_panic(
+            pkg_config::Config::new()
+                .statik(true)
+                .find(portaudio_pc_file),
+        );
     }
 }
 
@@ -153,21 +166,12 @@ mod platform {
 mod platform {
     use std::path::Path;
 
-    const PORTAUDIO_DOWNLOAD_URL: &'static str = "http://www.portaudio.com";
+    pub fn download() {}
 
-    fn print_lib_url() {
-        panic!("Don't know how to build portaudio on Windows yet. Sources and build instructions available at: {}", PORTAUDIO_DOWNLOAD_URL);
-    }
-
-    pub fn download() {
-        print_lib_url();
-    }
-
-    pub fn build(_: &Path) {
-        print_lib_url();
-    }
+    pub fn build(_: &Path) {}
 
     pub fn print_libs(_: &Path) {
-        print_lib_url();
+        std::env::set_var("VCPKGRS_DYNAMIC", "1");
+        vcpkg::find_package("portaudio").unwrap();
     }
 }
