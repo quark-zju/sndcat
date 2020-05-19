@@ -25,3 +25,19 @@
 //pub mod mac_core;
 
 // pub mod asio;
+
+/// Wasapi specific.
+pub mod wasapi;
+use libc::c_void;
+use std::fmt::Debug;
+
+/// Convert to a pointer suitable in
+/// `PaStreamParameters::hostApiSpecificStreamInfo`.
+#[doc(hidden)]
+pub trait ToHostApiSpecificStreamInfo: Debug {
+    fn to_host_api_specific_stream_info(&self) -> *const c_void {
+        self as *const Self as _
+    }
+}
+
+impl ToHostApiSpecificStreamInfo for wasapi::WasapiStreamInfo {}
