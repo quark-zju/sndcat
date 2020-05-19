@@ -272,6 +272,9 @@ pub struct Parameters<S> {
     /// If `false`, audio data is passed as an array of pointers to separate buffers, one buffer
     /// for each channel.
     pub is_interleaved: bool,
+    /// Pointer to the hostApiSpecificStreamInfo.
+    /// Useful by c-bindings.
+    host_api_specific_stream_info: *mut (),
     /// Sample format of the audio data provided to/by the device.
     sample_format: std::marker::PhantomData<S>,
 }
@@ -382,6 +385,7 @@ impl<S> Parameters<S> {
             is_interleaved: is_interleaved,
             suggested_latency: suggested_latency,
             sample_format: std::marker::PhantomData,
+            host_api_specific_stream_info: ptr::null_mut(),
         }
     }
 }
@@ -866,6 +870,7 @@ impl<S: Sample> Parameters<S> {
             suggested_latency: c_params.suggestedLatency,
             is_interleaved: is_interleaved,
             sample_format: std::marker::PhantomData,
+            host_api_specific_stream_info: c_params.hostApiSpecificStreamInfo as *mut (),
         })
     }
 }
@@ -890,7 +895,7 @@ impl<S: Sample> From<Parameters<S>> for ffi::PaStreamParameters {
             channelCount: channel_count as raw::c_int,
             sampleFormat: sample_format_flags.bits(),
             suggestedLatency: suggested_latency,
-            hostApiSpecificStreamInfo: ptr::null_mut(),
+            hostApiSpecificStreamInfo: params.host_api_specific_stream_info as _,
         }
     }
 }
