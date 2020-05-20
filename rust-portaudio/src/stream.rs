@@ -3,10 +3,12 @@
 //!
 //! The primary type of interest is [**Stream**](./struct.Stream).
 
+use crate::ext::ToHostApiSpecificStreamInfo;
 use ffi;
 use libc;
 use num::FromPrimitive;
 use std::os::raw;
+use std::sync::Arc;
 use std::{self, ptr};
 
 use super::error::Error;
@@ -257,7 +259,7 @@ pub struct Stream<M, F> {
 }
 
 /// Parameters for one direction (input or output) of a stream.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Clone, Debug)]
 pub struct Parameters<S> {
     /// Index of the device to be used, or a variant indicating to use the host-specific API.
     pub device: DeviceKind,
@@ -274,13 +276,13 @@ pub struct Parameters<S> {
     pub is_interleaved: bool,
     /// Pointer to the hostApiSpecificStreamInfo.
     /// Useful by c-bindings.
-    host_api_specific_stream_info: *mut (),
+    pub host_api_specific_stream_info: Option<Arc<dyn ToHostApiSpecificStreamInfo>>,
     /// Sample format of the audio data provided to/by the device.
     sample_format: std::marker::PhantomData<S>,
 }
 
 /// Settings used to construct an **Input** **Stream**.
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct InputSettings<I> {
     /// The set of Parameters necessary for constructing the **Stream**.
     pub params: Parameters<I>,
@@ -293,7 +295,7 @@ pub struct InputSettings<I> {
 }
 
 /// Settings used to construct an **Out** **Stream**.
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct OutputSettings<O> {
     /// The set of Parameters necessary for constructing the **Stream**.
     pub params: Parameters<O>,
@@ -306,7 +308,7 @@ pub struct OutputSettings<O> {
 }
 
 /// Settings used to construct a **Duplex** **Stream**.
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct DuplexSettings<I, O> {
     /// The set of Parameters necessary for constructing the input **Stream**.
     pub in_params: Parameters<I>,
@@ -385,7 +387,7 @@ impl<S> Parameters<S> {
             is_interleaved: is_interleaved,
             suggested_latency: suggested_latency,
             sample_format: std::marker::PhantomData,
-            host_api_specific_stream_info: ptr::null_mut(),
+            host_api_specific_stream_info: None,
         }
     }
 }
@@ -478,7 +480,8 @@ where
         Option<ffi::PaStreamParameters>,
         Option<ffi::PaStreamParameters>,
     ) {
-        (Some(self.params.into()), None)
+        let params = &self.params;
+        (Some(params.into()), None)
     }
 
     fn new_callback_args(
@@ -528,7 +531,8 @@ where
         Option<ffi::PaStreamParameters>,
         Option<ffi::PaStreamParameters>,
     ) {
-        (None, Some(self.params.into()))
+        let params = &self.params;
+        (None, Some(params.into()))
     }
 
     fn new_buffer(&self, frames_per_buffer: u32) -> Self::Buffer {
@@ -584,7 +588,9 @@ where
         Option<ffi::PaStreamParameters>,
         Option<ffi::PaStreamParameters>,
     ) {
-        (Some(self.in_params.into()), Some(self.out_params.into()))
+        let in_params = &self.in_params;
+        let out_params = &self.out_params;
+        (Some(in_params.into()), Some(out_params.into()))
     }
 
     fn new_buffer(&self, frames_per_buffer: u32) -> Self::Buffer {
@@ -853,6 +859,10 @@ impl<S: Sample> Parameters<S> {
     /// Returns `None` if the `device` index is neither a valid index or a
     /// `UseHostApiSpecificDeviceSpecification` flag.
     pub fn from_c_params(c_params: ffi::PaStreamParameters) -> Option<Self> {
+        // Refuse to convert if hostApiSpecificStreamInfo is not NULL.
+        if !c_params.hostApiSpecificStreamInfo.is_null() {
+            return None;
+        }
         let sample_format_flags: SampleFormatFlags = c_params.sampleFormat.into();
         let is_interleaved = !sample_format_flags.contains(sample_format_flags::NON_INTERLEAVED);
         let c_sample_format = SampleFormat::from_flags(c_params.sampleFormat.into());
@@ -870,32 +880,33 @@ impl<S: Sample> Parameters<S> {
             suggested_latency: c_params.suggestedLatency,
             is_interleaved: is_interleaved,
             sample_format: std::marker::PhantomData,
-            host_api_specific_stream_info: c_params.hostApiSpecificStreamInfo as *mut (),
+            host_api_specific_stream_info: None,
         })
     }
 }
 
-impl<S: Sample> From<Parameters<S>> for ffi::PaStreamParameters {
+impl<S: Sample> From<&Parameters<S>> for ffi::PaStreamParameters {
     /// Converts the **Parameters** into its matching `C_PaStreamParameters`.
-    fn from(params: Parameters<S>) -> Self {
-        let Parameters {
-            device,
-            channel_count,
-            suggested_latency,
-            is_interleaved,
-            ..
-        } = params;
+    fn from(params: &Parameters<S>) -> Self {
         let sample_format = S::sample_format();
         let mut sample_format_flags = sample_format.flags();
-        if !is_interleaved {
+        if !params.is_interleaved {
             sample_format_flags.insert(sample_format_flags::NON_INTERLEAVED);
         }
+        let stream_info = match params.host_api_specific_stream_info {
+            Some(ref info) => {
+                // XXX: This is not memory safe if Parameters gets dropped and
+                // info gets freed!!
+                info.to_host_api_specific_stream_info()
+            }
+            None => ptr::null(),
+        };
         ffi::PaStreamParameters {
-            device: device.into(),
-            channelCount: channel_count as raw::c_int,
+            device: params.device.into(),
+            channelCount: params.channel_count as raw::c_int,
             sampleFormat: sample_format_flags.bits(),
-            suggestedLatency: suggested_latency,
-            hostApiSpecificStreamInfo: params.host_api_specific_stream_info as _,
+            suggestedLatency: params.suggested_latency,
+            hostApiSpecificStreamInfo: stream_info as _,
         }
     }
 }

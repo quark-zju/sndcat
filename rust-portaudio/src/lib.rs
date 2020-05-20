@@ -349,7 +349,7 @@ impl PortAudio {
     /// is not supported otherwise.
     pub fn is_input_format_supported<I>(
         &self,
-        params: StreamParameters<I>,
+        params: &StreamParameters<I>,
         sample_rate: f64,
     ) -> Result<(), Error>
     where
@@ -367,7 +367,7 @@ impl PortAudio {
     /// is not supported otherwise.
     pub fn is_output_format_supported<O>(
         &self,
-        params: StreamParameters<O>,
+        params: &StreamParameters<O>,
         sample_rate: f64,
     ) -> Result<(), Error>
     where
@@ -385,8 +385,8 @@ impl PortAudio {
     /// is not supported otherwise.
     pub fn is_duplex_format_supported<I, O>(
         &self,
-        in_params: StreamParameters<I>,
-        out_params: StreamParameters<O>,
+        in_params: &StreamParameters<I>,
+        out_params: &StreamParameters<O>,
         sample_rate: f64,
     ) -> Result<(), Error>
     where
