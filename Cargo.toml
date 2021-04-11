@@ -18,5 +18,4 @@ portaudio = "0.7"
 speexdsp-resampler = "0.1"
 
 [build-dependencies]
-cc = "1"
 vcpkg = "0.2"

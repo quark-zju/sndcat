@@ -13,7 +13,7 @@ def main():
             os.path.join(vcpkg_root, "vcpkg"),
             "--overlay-ports=%s" % os.getcwd(),
             "install",
-            "portaudio:x64-windows",
+            "portaudio:x64-windows-static-md",
         ]
     )
     return 0
