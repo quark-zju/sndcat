@@ -1,0 +1,22 @@
+[package]
+name = "sndcat"
+version = "0.1.0"
+authors = ["Jun Wu <quark@lihdd.net>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1"
+audiopus = "0.2"
+ctrlc = "3"
+env_logger = "0.8"
+lalrpop-util = { version = "0.19", features = ["lexer"] }
+log = "0.4"
+minimp3 = "0.5"
+ogg = "0.8"
+parking_lot = "0.11"
+portaudio = "0.7"
+speexdsp-resampler = "0.1"
+
+[build-dependencies]
+cc = "1"
+vcpkg = "0.2"

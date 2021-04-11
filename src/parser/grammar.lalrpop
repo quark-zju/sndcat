@@ -1,0 +1,65 @@
+use crate::ast::Expr;
+
+// Binary Operator Precedence (highest to lowest):
+// BinOp1: : ..
+// BinOp2: & and % -
+// BinOp3: | + or
+
+grammar;
+
+pub Expr = Expr1;
+
+Expr1: Expr = {
+    Symbol2 => Expr::Name(<>),
+    <f:Symbol1> "(" <args:(Expr ",")*> <last:Expr?> ")" => {
+        // Function call.
+        let mut arg_list: Vec<Expr> = args.into_iter().map(|(e, _)| e).collect();
+        if let Some(last_arg) = last { arg_list.push(last_arg); }
+        Expr::Fn(f.into(), arg_list)
+    },
+    "(" <Expr> ")"
+};
+
+Symbol2: String = {
+    Symbol1 => <>,
+    <squote:r"\x27([^\x27\x5c]|\x5c.)*\x27"> => {
+        // Escaped string.
+        let mut result = String::with_capacity(squote.len());
+        let mut prev = '_';
+        for ch in squote[1..squote.len()-1].chars() {
+            match (prev, ch) {
+                ('\\', 'n') => result.push('\n'),
+                ('\\', _) => {
+                    result.push('\\');
+                    result.push(ch);
+                },
+                (_, '\\') => (),
+                (_, _) => result.push(ch),
+            }
+            prev = ch;
+        }
+        result
+    },
+    <dquote:r"\x22([^\x22\x5c]|\x5c.)*\x22"> => {
+        // Escaped string.
+        let mut result = String::with_capacity(dquote.len());
+        let mut prev = '_';
+        for ch in dquote[1..dquote.len()-1].chars() {
+            match (prev, ch) {
+                ('\\', 'n') => result.push('\n'),
+                ('\\', _) => {
+                    result.push('\\');
+                    result.push(ch);
+                },
+                (_, '\\') => (),
+                (_, _) => result.push(ch),
+            }
+            prev = ch;
+        }
+        result
+    },
+}
+
+Symbol1: String = {
+    r"[a-zA-Z0-9/_$@.:\\-]+" => <>.to_string(),
+}
