@@ -13,12 +13,9 @@ vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}/lib-src/portaudio-v19
     PREFER_NINJA
     OPTIONS
-    	-DPA_USE_DS=ON
         -DPA_USE_WASAPI=ON
-        -DPA_USE_WDMKS=ON
-        -DPA_USE_WMME=ON
         -DPA_LIBNAME_ADD_SUFFIX=OFF
-        -DPA_ENABLE_DEBUG_OUTPUT=ON
+        -DPA_ENABLE_DEBUG_OUTPUT=OFF
     OPTIONS_DEBUG
         -DPA_ENABLE_DEBUG_OUTPUT:BOOL=ON
 )
