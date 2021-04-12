@@ -1,4 +1,5 @@
 use crate::ast::Expr;
+use crate::config;
 use crate::input;
 use crate::output;
 use portaudio::PortAudio;
@@ -109,8 +110,10 @@ Environment variables:
     SNDCAT_RESAMPLE_QUALITY
                     Default resampling quality (0-10, default: 4).
     SNDCAT_DECODE_BUFFER_MILLIS
-                    Minimal decoder (mp3, opus) buffer size.
-                    Milliseconds. (default: 5).
+                    Minimal decoder (mp3, opus) buffer size
+                    (milliseconds, default: 5).
+    SNDCAT_MAIN_THREAD_PRIORITY
+                    Main thread priority (0-100, default: 80).
 "#;
     println!("{}", help);
 }
@@ -197,7 +200,9 @@ pub fn run(args: &[&str]) -> anyhow::Result<i32> {
         }
     })?;
 
-    let _ = thread_priority::set_current_thread_priority(ThreadPriority::Specific(80));
+    let _ = thread_priority::set_current_thread_priority(ThreadPriority::Specific(
+        *config::MAIN_THREAD_PRIORITY,
+    ));
     while let Some(samples) = (input.read)() {
         let samples = Arc::new(samples);
         for output in &mut outputs {

@@ -19,3 +19,13 @@ pub static DECODE_BUFFER_MILLIS: Lazy<usize> = Lazy::new(|| {
     }
     result
 });
+
+pub static MAIN_THREAD_PRIORITY: Lazy<u32> = Lazy::new(|| {
+    let mut result = 80;
+    if let Ok(v) = std::env::var("SNDCAT_MAIN_THREAD_PRIORITY") {
+        if let Ok(v) = v.parse() {
+            result = v;
+        }
+    }
+    result.min(100).max(0)
+});
