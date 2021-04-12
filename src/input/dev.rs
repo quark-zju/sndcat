@@ -21,7 +21,7 @@ pub fn input_device(pa: &PortAudio, i: u32) -> anyhow::Result<Input> {
     let mut stream = pa.open_blocking_stream(settings)?;
     stream.start()?;
     let stream = ForceSend(stream);
-    let name = format!("Device[{}]", info.name.replace('\r', " "));
+    let name = format!("Device[{:?}]", info.name.replace('\r', " "));
     let info = StreamInfo {
         sample_rate: sample_rate as _,
         channels: channel_count as _,

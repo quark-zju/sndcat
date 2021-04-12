@@ -169,12 +169,13 @@ pub fn run(args: &[&str]) -> anyhow::Result<i32> {
         let mut outputs = Vec::new();
         let ctx = output::EvalContext { pa: &pa };
         for expr in output_args {
-            log::info!("creating output: {}", expr);
+            log::debug!("creating output: {}", expr);
             let expr = Expr::parse(&expr)?;
             let output = output::eval_output(&ctx, &expr)?;
             if let Some(hint) = output.sample_rate_hint {
                 sample_rate_hint = Some(hint);
             }
+            log::info!("output: {}", &output.name);
             outputs.push(output);
         }
         outputs
@@ -189,9 +190,11 @@ pub fn run(args: &[&str]) -> anyhow::Result<i32> {
             pa: &pa,
             sample_rate_hint,
         };
-        log::info!("creating input: {}", expr);
+        log::debug!("creating input: {}", expr);
         let expr = Expr::parse(&expr)?;
-        input::eval_input(&ctx, &expr)?
+        let input = input::eval_input(&ctx, &expr)?;
+        log::info!("input: {}", &input.name);
+        input
     };
 
     let running = Arc::new(AtomicBool::new(true));
@@ -215,14 +218,14 @@ pub fn run(args: &[&str]) -> anyhow::Result<i32> {
             break;
         }
     }
-    log::trace!("Dropping inputs and outputs");
+    log::trace!("dropping inputs and outputs");
     drop(input);
     for output in &mut outputs {
-        log::info!("Closing output {}", &output.name);
+        log::info!("closing output {}", &output.name);
         output.writer.close()?;
     }
     drop(outputs);
-    log::trace!("Dropped inputs and outputs");
+    log::trace!("dropped inputs and outputs");
 
     Ok(0)
 }
