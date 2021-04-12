@@ -7,6 +7,7 @@ mod dev;
 mod gen;
 mod level;
 mod mix;
+mod mono;
 mod mp3;
 mod opus;
 mod resample;
@@ -75,6 +76,11 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
                     inputs.push(input);
                 }
                 Ok(mix::mix(inputs))
+            }
+            "mono" => {
+                anyhow::ensure!(args.len() >= 1);
+                let input = eval_input(&ctx, &args[0])?;
+                Ok(mono::mono(input))
             }
             "resample" => {
                 anyhow::ensure!(args.len() >= 2);

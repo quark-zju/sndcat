@@ -75,6 +75,9 @@ INPUT:
             Note: if quality is too high and CPU cannot catch up, it might
             cause "output underflow" error!
 
+        mono(input)
+            Convert an input stream to Mono.
+
     Multiple inputs like '-i X -i Y' is equivalent to 'mix(X, Y)'.
 
     For endless streams (ex. dev, or sin(x)), press Ctrl+C to end the input.
