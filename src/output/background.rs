@@ -8,8 +8,12 @@ use std::thread;
 use thread_priority::ThreadPriority;
 
 /// Put output loop in a thread.
-pub fn background(mut output: Output, priority: Option<ThreadPriority>) -> anyhow::Result<Output> {
-    let (sender, receiver) = sync_channel(1);
+pub fn background(
+    mut output: Output,
+    priority: Option<ThreadPriority>,
+    backlog: usize,
+) -> anyhow::Result<Output> {
+    let (sender, receiver) = sync_channel(backlog);
     let name = format!("Background[{}]", &output.name);
     let sample_rate_hint = output.sample_rate_hint;
     let handle = thread::Builder::new()

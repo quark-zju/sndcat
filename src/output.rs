@@ -75,13 +75,13 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
                 };
                 let output = opus::opus(&path, info, &mode)?;
                 // Move to background so it does not block main thread.
-                let output = background::background(output, None)?;
+                let output = background::background(output, None, 5)?;
                 Ok(output)
             }
             "stats" => {
                 let output = terminal::stats();
                 // Move to background so it does not block main thread.
-                let output = background::background(output, None)?;
+                let output = background::background(output, None, 1)?;
                 Ok(output)
             }
             _ => anyhow::bail!("unknown function: {}", name),
