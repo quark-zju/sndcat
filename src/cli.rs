@@ -44,30 +44,33 @@ INPUT:
         dev(i)
             Audio input device with index i.
             Use 'sndcat list' to see device indexes.
+            Alias: i, if i is an integer.
 
         mp3(path)
             MP3 stream of the given file path.
+            Alias: path, if path ends with '.mp3'.
 
         opus(path)
             OggOpus stream of the given file path.
+            Alias: path, if path ends with '.opus'.
 
         sin(freq)
             Sin wave with given frequency.
 
         silence()
             Generate silence stream. Useful to keep audio device busy.
+            Alias: nul
 
         mix(input, input, ...)
-            Mix multiple streams.
+            Mix multiple streams together.
+            The mixed stream ends when one of the input stream ends.
 
         resample(input, rate, quality=4)
             Resample a stream. Max quality is 10.
+            Note: if quality is too high and CPU cannot catch up, it might
+            cause "output underflow" error!
 
-    Example:
-
-        -i "mix(mp3('1.mp3'), sin(440), dev(10))"
-
-    Multiple inputs '-i X -i Y' is equivalent to 'mix(X, Y)'.
+    Multiple inputs like '-i X -i Y' is equivalent to 'mix(X, Y)'.
 
     For endless streams (ex. dev, or sin(x)), press Ctrl+C to end the input.
 
@@ -77,13 +80,16 @@ OUTPUT:
         dev(i)
             Audio output device with index i.
             Use 'sndcat list' to see device indexes.
+            Alias: i, if i is an integer.
 
         opus(path, samplerate=16000, channels=1, mode=audio)
             Encode into an OggOpus file at the given path.
             mode can be 'audio' or 'voip'.
+            Alias: path, if path ends with '.opus'.
 
         stats()
             Print statistics to stderr.
+            Alias: -
 
     Example:
         -o dev(10) -o stats() -o opus('1.opus', 24000, 2)

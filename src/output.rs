@@ -25,7 +25,22 @@ pub struct EvalContext<'a> {
 pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
     match expr {
         Expr::Name(name) => {
-            anyhow::bail!("unknown output: {}", name);
+            // Syntax sugar.
+            if name.ends_with(".opus") {
+                // a.opus => opus(a.opus)
+                eval_output(
+                    ctx,
+                    &Expr::Fn("opus".into(), vec![Expr::Name(name.clone())]),
+                )
+            } else if name == "-" {
+                // - => stats()
+                eval_output(ctx, &Expr::Fn("stats".into(), vec![]))
+            } else if name.parse::<u16>().is_ok() {
+                // 42 => dev(42)
+                eval_output(ctx, &Expr::Fn("dev".into(), vec![Expr::Name(name.clone())]))
+            } else {
+                anyhow::bail!("unknown output: {}", name)
+            }
         }
         Expr::Fn(name, args) => match name.as_ref() {
             "dev" => match &args[..] {

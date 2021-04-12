@@ -25,7 +25,25 @@ pub struct EvalContext<'a> {
 pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
     match expr {
         Expr::Name(name) => {
-            anyhow::bail!("unknown input: {}", name);
+            // Syntax sugar.
+            if name.ends_with(".mp3") {
+                // a.mp3 => mp3(a.mp3)
+                eval_input(ctx, &Expr::Fn("mp3".into(), vec![Expr::Name(name.clone())]))
+            } else if name.ends_with(".opus") {
+                // a.opus => opus(a.opus)
+                eval_input(
+                    ctx,
+                    &Expr::Fn("opus".into(), vec![Expr::Name(name.clone())]),
+                )
+            } else if name.parse::<u16>().is_ok() {
+                // 42 => dev(42)
+                eval_input(ctx, &Expr::Fn("dev".into(), vec![Expr::Name(name.clone())]))
+            } else if name.to_ascii_lowercase() == "nul" {
+                // nul => silence()
+                eval_input(ctx, &Expr::Fn("silence".into(), vec![]))
+            } else {
+                anyhow::bail!("unknown input: {}", name);
+            }
         }
         Expr::Fn(name, args) => match name.as_ref() {
             "dev" => match &args[..] {
