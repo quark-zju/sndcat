@@ -1,3 +1,4 @@
+use crate::config;
 use crate::mixer::Samples;
 use crate::mixer::StreamInfo;
 
@@ -8,20 +9,13 @@ pub struct Resampler {
     quality: usize,
 }
 
-fn default_quality() -> usize {
-    let mut result = 4;
-    if let Ok(v) = std::env::var("SNDCAT_RESAMPLE_QUALITY") {
-        if let Ok(v) = v.parse() {
-            result = v;
-        }
-    }
-    result
-}
-
 impl Resampler {
     pub fn new(input_info: StreamInfo, output_info: StreamInfo, quality: Option<usize>) -> Self {
         assert_eq!(input_info.channels, output_info.channels);
-        let quality = quality.unwrap_or_else(default_quality).max(0).min(10);
+        let quality = quality
+            .unwrap_or_else(|| *config::RESAMPLE_QUALITY)
+            .max(0)
+            .min(10);
         let state = speexdsp_resampler::State::new(
             input_info.channels as _,
             input_info.sample_rate as _,

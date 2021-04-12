@@ -2,6 +2,7 @@
 
 mod ast;
 mod cli;
+mod config;
 mod input;
 mod mixer;
 mod oggopus;
