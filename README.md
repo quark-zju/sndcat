@@ -80,10 +80,13 @@ progress of file encoding:
 
 Specifying `-o` multiple times means writing to them simultaneously.
 
-## Debug Logging
+## Environment variables
 
-Set the `LOG` environment variable to `info`, `debug` or `trace` to enable
-verbose logging.
+Set `LOG` to `info`, `debug` or `trace` to enable verbose logging.
+
+Set `SNDCAT_RESAMPLE_QUALITY` to 0 (min) .. 10 (max) to set default resampling
+quality (default: 4). Note: Setting this too high might cause too much CPU
+usage and possibly "output underflow" error.
 
 ## Build
 
