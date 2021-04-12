@@ -99,10 +99,20 @@ impl Samples {
 
     /// Adjust loudness. db: decibel; positive: louder, negative: quieter.
     pub fn adjust_level(&mut self, db: f32) {
-        if db == 0.0 {
+        if db == 0.0 || self.is_empty() {
+            return;
+        }
+        let max = self
+            .samples
+            .iter()
+            .map(|f| f.abs())
+            .fold(0.0, |m, f| f.max(m));
+        if max >= 1.0 || max <= 0.0 {
             return;
         }
         let amp: f32 = (10.0f32).powf(db / 20.0);
+        // Prevent clipping.
+        let amp = amp.min(0.9999 / max);
         for f in self.samples.iter_mut() {
             *f = *f * amp;
         }
