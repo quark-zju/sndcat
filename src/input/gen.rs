@@ -10,7 +10,7 @@ pub fn sin_wave(sample_rate_hint: Option<u32>, params: &str) -> anyhow::Result<I
     let mut freq: f32 = 440.0;
     let mut power: f32 = 0.5;
     let mut sample_rate: u32 = sample_rate_hint.unwrap_or(48000);
-    let mut channels: u16 = 2;
+    let mut channels: u16 = 1;
 
     for s in params.split(';') {
         if s.contains("=") {
@@ -46,6 +46,28 @@ pub fn sin_wave(sample_rate_hint: Option<u32>, params: &str) -> anyhow::Result<I
                 buf.push((step * (tick as f32)).sin() * power);
             }
         }
+        Some(Samples::new(info, buf))
+    };
+
+    Ok(Input {
+        name,
+        info,
+        read: Box::new(func),
+    })
+}
+
+pub fn silence(sample_rate_hint: Option<u32>) -> anyhow::Result<Input> {
+    let sample_rate: u32 = sample_rate_hint.unwrap_or(48000);
+    let channels: u16 = 1;
+
+    let name = "Silence[]".to_string();
+    let info = StreamInfo {
+        sample_rate,
+        channels,
+    };
+    let func = move || -> Option<Samples> {
+        let n = info.sample_count_millis(100);
+        let buf = vec![0.0; n];
         Some(Samples::new(info, buf))
     };
 

@@ -54,6 +54,9 @@ INPUT:
         sin(freq)
             Sin wave with given frequency.
 
+        silence()
+            Generate silence stream. Useful to keep audio device busy.
+
         mix(input, input, ...)
             Mix multiple streams.
 

@@ -23,6 +23,12 @@ Record a video conference, including what you said and others said:
     # device recording what others said.
     sndcat -i dev(5) -i dev(7) -o opus(conf.opus)
 
+Keep an output device busy by writing silent samples. This prevents the
+device from entering a "paused" state that will make loopback recording
+hanging.
+
+    sndcat -i silence() -o dev(6)
+
 ### Input
 
 Use `-i` to specify input streams.

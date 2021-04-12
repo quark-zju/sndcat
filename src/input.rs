@@ -42,6 +42,7 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
                 };
                 gen::sin_wave(ctx.sample_rate_hint, params)
             }
+            "silence" => gen::silence(ctx.sample_rate_hint),
             "mix" => {
                 let mut inputs = Vec::with_capacity(args.len());
                 let mut ctx = ctx.clone();
