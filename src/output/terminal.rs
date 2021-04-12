@@ -80,13 +80,14 @@ impl Meters {
         self.values
             .iter()
             .map(|(db, clipped)| {
-                // limit to -60 .. 0 range.
+                // limit to MIN_DB .. MAX_DB range.
                 let db = db.min(0.0);
-                if db <= -60.0 {
+                if db <= MIN_DB {
                     " ".to_string()
                 } else {
-                    let i = (((60.0 + db) / ((SYMBOLS.len() + 1) as f32)) as usize)
-                        .min(SYMBOLS.len() - 1);
+                    let i = (db - MIN_DB) / (MAX_DB - MIN_DB) * (SYMBOLS.len() as f32);
+                    let i = i as usize;
+                    let i = i.min(SYMBOLS.len() - 1).max(0);
                     let sym = SYMBOLS[i].to_string();
                     if *clipped {
                         format!("\x1b[31m{}\x1b[0m", sym)
@@ -102,10 +103,14 @@ impl Meters {
     fn current_db(&self) -> f32 {
         match self.values.back() {
             Some((db, _)) => *db,
-            None => -60.0,
+            None => MIN_DB,
         }
     }
 }
+
+// Visualize "db" in the given range.
+const MIN_DB: f32 = -32.0;
+const MAX_DB: f32 = -8.0;
 
 impl StatsWriter {
     fn write_stats(&self) {
