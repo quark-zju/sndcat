@@ -184,8 +184,9 @@ pub fn run(args: &[&str]) -> anyhow::Result<i32> {
     })?;
 
     while let Some(samples) = (input.read)() {
+        let samples = Arc::new(samples);
         for output in &mut outputs {
-            output.writer.write(&samples)?;
+            output.writer.write(samples.clone())?;
         }
         if !running.load(SeqCst) {
             break;

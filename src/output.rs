@@ -2,13 +2,15 @@ use crate::ast::Expr;
 use crate::mixer::Samples;
 use crate::mixer::StreamInfo;
 use portaudio::PortAudio;
+use std::sync::Arc;
 
+mod background;
 mod dev;
 mod opus;
 mod terminal;
 
 pub trait OutputWriter: Send + 'static {
-    fn write(&mut self, samples: &Samples) -> anyhow::Result<()>;
+    fn write(&mut self, samples: Arc<Samples>) -> anyhow::Result<()>;
     fn close(&mut self) -> anyhow::Result<()>;
 }
 
@@ -46,7 +48,9 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
             "dev" => match &args[..] {
                 [Expr::Name(i)] if i.parse::<u32>().is_ok() => {
                     let i = i.parse::<u32>()?;
-                    Ok(dev::output_device(ctx.pa, i)?)
+                    let output = dev::output_device(ctx.pa, i)?;
+                    // Not moving to background. Want the blocking behavior.
+                    Ok(output)
                 }
                 _ => anyhow::bail!("unknown args: {:?}", args),
             },
@@ -69,9 +73,17 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
                     sample_rate,
                     channels,
                 };
-                opus::opus(&path, info, &mode)
+                let output = opus::opus(&path, info, &mode)?;
+                // Move to background so it does not block main thread.
+                let output = background::background(output, None)?;
+                Ok(output)
             }
-            "stats" => Ok(terminal::stats()),
+            "stats" => {
+                let output = terminal::stats();
+                // Move to background so it does not block main thread.
+                let output = background::background(output, None)?;
+                Ok(output)
+            }
             _ => anyhow::bail!("unknown function: {}", name),
         },
     }

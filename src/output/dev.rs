@@ -6,6 +6,7 @@ use portaudio::stream::OutputSettings;
 use portaudio::stream::Parameters;
 use portaudio::DeviceIndex;
 use portaudio::PortAudio;
+use std::sync::Arc;
 
 pub fn output_device(pa: &PortAudio, i: u32) -> anyhow::Result<Output> {
     let i = DeviceIndex(i);
@@ -51,9 +52,8 @@ struct DeviceOutput {
 }
 
 impl OutputWriter for DeviceOutput {
-    fn write(&mut self, samples: &Samples) -> anyhow::Result<()> {
-        let mut samples = samples.clone();
-        samples.normalize_both(self.info, &mut self.resampler)?;
+    fn write(&mut self, samples: Arc<Samples>) -> anyhow::Result<()> {
+        let samples = crate::mixer::normalize_cow(samples, self.info, &mut self.resampler)?;
 
         // https://portaudio.music.columbia.narkive.com/nLRsY3jZ/thread-safety-of-blocking-calls
         // > In general, calls to ReadStream and WriteStream on different streams in different threads are probably safe...

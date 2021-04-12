@@ -134,6 +134,7 @@ impl Samples {
         assert_eq!(self.info, info);
         Ok(())
     }
+
     /// Normalize to spec.
     pub fn normalize_both(
         &mut self,
@@ -194,6 +195,19 @@ impl Samples {
         }
         Ok(())
     }
+}
+
+/// Similar to `normalize_both`, but do it in a copy-on-write way.
+pub fn normalize_cow(
+    mut samples: Arc<Samples>,
+    info: StreamInfo,
+    resampler: &mut Option<Resampler>,
+) -> anyhow::Result<Arc<Samples>> {
+    if samples.info != info {
+        let samples = Arc::make_mut(&mut samples);
+        samples.normalize_both(info, resampler)?;
+    }
+    Ok(samples)
 }
 
 impl Mixer {

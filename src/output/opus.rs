@@ -4,6 +4,7 @@ use crate::output::Output;
 use crate::output::OutputWriter;
 use anyhow::Context;
 use std::collections::VecDeque;
+use std::sync::Arc;
 
 pub fn opus(path: &str, info: StreamInfo, mode: &str) -> anyhow::Result<Output> {
     use audiopus::Application;
@@ -146,11 +147,10 @@ impl<T: std::io::Write + Send + 'static> OggWriter<T> {
 }
 
 impl<T: std::io::Write + Send + 'static> OutputWriter for OggWriter<T> {
-    fn write(&mut self, samples: &Samples) -> anyhow::Result<()> {
-        let mut samples = samples.clone();
-        samples.normalize_both(self.info, &mut self.resampler)?;
+    fn write(&mut self, samples: Arc<Samples>) -> anyhow::Result<()> {
+        let samples = crate::mixer::normalize_cow(samples, self.info, &mut self.resampler)?;
         assert_eq!(self.info, samples.info);
-        self.in_buf.extend(samples.samples);
+        self.in_buf.extend(samples.samples.iter().cloned());
 
         // Feed 120ms data.
         while let Some(encoded) = self.encode_packet(120, 20)? {
