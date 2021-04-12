@@ -16,6 +16,7 @@ ogg = "0.8"
 parking_lot = "0.11"
 portaudio = "0.7"
 speexdsp-resampler = "0.1"
+thread-priority = "0.2"
 
 [build-dependencies]
 vcpkg = "0.2"

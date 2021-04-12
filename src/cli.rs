@@ -5,6 +5,7 @@ use portaudio::PortAudio;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::SeqCst;
 use std::sync::Arc;
+use thread_priority::ThreadPriority;
 
 fn print_device_list(pa: &PortAudio) -> Result<(), portaudio::Error> {
     let ds = pa.devices()?;
@@ -183,6 +184,7 @@ pub fn run(args: &[&str]) -> anyhow::Result<i32> {
         }
     })?;
 
+    let _ = thread_priority::set_current_thread_priority(ThreadPriority::Specific(80));
     while let Some(samples) = (input.read)() {
         let samples = Arc::new(samples);
         for output in &mut outputs {

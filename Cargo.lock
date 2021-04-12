@@ -383,6 +383,7 @@ dependencies = [
  "parking_lot",
  "portaudio",
  "speexdsp-resampler",
+ "thread-priority",
  "vcpkg",
 ]
 
@@ -430,6 +431,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "thread-priority"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dff8073d6382f78367078270c65b5e96cd7f6afc49c42562188e02fea28bfd1"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]
