@@ -42,16 +42,16 @@ impl Meters {
             current_power: 0.0,
             clipped: false,
             total: 0,
-            info: StreamInfo {
-                sample_rate: 48000,
-                channels: 1,
-            },
+            info: StreamInfo::dummy(),
         }
     }
 
     fn process(&mut self, samples: &Samples) {
         // Update "meters" (for rendering vu meters) and "total".
         let mut total = self.total;
+        if total == 0 {
+            self.info = samples.info;
+        }
         let meter_sample_rate = (self.info.sample_rate / 10) as u64;
         let mut next_total = (total / meter_sample_rate + 1) * meter_sample_rate;
         for &s in &samples.samples {
