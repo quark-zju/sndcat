@@ -32,6 +32,7 @@ pub fn opus(path: &str) -> anyhow::Result<Input> {
         audiopus::coder::Decoder::new(audiopus::SampleRate::Hz48000, channels)?
     };
 
+    let min_buffer_millis = *crate::config::DECODE_BUFFER_MILLIS;
     let mut read_samples = {
         let mut out_buf = vec![0f32; (info.sample_rate as usize) * 3];
         move || -> Option<Samples> {
@@ -42,8 +43,11 @@ pub fn opus(path: &str) -> anyhow::Result<Input> {
                 let samples = out_buf[..(len * (info.channels as usize))].to_vec();
                 let samples = Samples::new(info, samples);
                 // Buffer samples. Avoid sending small samples frequently.
+                if samples.millis() >= min_buffer_millis && combined_samples.is_empty() {
+                    return Some(samples);
+                }
                 combined_samples.concat(samples);
-                if combined_samples.millis() >= 50 {
+                if combined_samples.millis() >= min_buffer_millis {
                     return Some(combined_samples);
                 }
             }
@@ -55,7 +59,7 @@ pub fn opus(path: &str) -> anyhow::Result<Input> {
         }
     };
 
-    let (sender, receiver) = sync_channel(10);
+    let (sender, receiver) = sync_channel((1000 / min_buffer_millis).max(30) + 1);
     thread::spawn(move || {
         while let Some(samples) = read_samples() {
             let _ = sender.send(samples);

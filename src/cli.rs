@@ -62,6 +62,9 @@ INPUT:
             Generate silence stream. Useful to keep audio device busy.
             Alias: nul
 
+        level(input, db)
+            Adjust loudness. db: float +3 (2x louder), -3 (half louder).
+
         mix(input, input, ...)
             Mix multiple streams together.
             The mixed stream ends when one of the input stream ends.
@@ -98,7 +101,17 @@ OUTPUT:
 Other commands:
 
     sndcat list     List devices.
-    sndcat help     Print this message."#;
+    sndcat help     Print this message.
+
+Environment variables:
+
+    LOG             Debug logging (ex. info, debug, trace).
+    SNDCAT_RESAMPLE_QUALITY
+                    Default resampling quality (0-10, default: 4).
+    SNDCAT_DECODE_BUFFER_MILLIS
+                    Minimal decoder (mp3, opus) buffer size.
+                    Milliseconds. (default: 5).
+"#;
     println!("{}", help);
 }
 

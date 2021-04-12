@@ -54,6 +54,13 @@ impl MixBuffer {
 }
 
 impl StreamInfo {
+    pub(crate) fn dummy() -> Self {
+        Self {
+            channels: 1,
+            sample_rate: 48000,
+        }
+    }
+
     pub fn sample_count_millis(&self, millis: usize) -> usize {
         (self.channels as usize) * (self.sample_rate as usize) * millis / 1000
     }
