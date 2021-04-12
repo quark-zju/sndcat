@@ -99,6 +99,12 @@ OUTPUT:
             Print statistics to stderr.
             Alias: -
 
+        tcp16le(port, samplerate=16000, channels=1)
+            Start a TCP server at 127.0.0.1:port. Provide a stream of raw
+            16bit little endian integer samples. Useful as input for other
+            programs. For example, it can be relatively easily read from
+            Python, then integrate with some ML tools or services.
+
     Example:
         -o dev(10) -o stats() -o opus('1.opus', 24000, 2)
 

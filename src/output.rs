@@ -7,6 +7,7 @@ use std::sync::Arc;
 mod background;
 mod dev;
 mod opus;
+mod tcp;
 mod terminal;
 
 pub trait OutputWriter: Send + 'static {
@@ -76,6 +77,23 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
                 let output = opus::opus(&path, info, &mode)?;
                 // Move to background so it does not block main thread.
                 let output = background::background(output, None, 5)?;
+                Ok(output)
+            }
+            "tcp16le" => {
+                let port: u16 = args[0].to_string().parse()?;
+                let sample_rate = match args.get(1) {
+                    Some(a) => a.to_string().parse()?,
+                    None => 16000,
+                };
+                let channels = match args.get(2) {
+                    Some(a) => a.to_string().parse()?,
+                    None => 1,
+                };
+                let info = StreamInfo {
+                    sample_rate,
+                    channels,
+                };
+                let output = tcp::tcp_i16_server(port, info)?;
                 Ok(output)
             }
             "stats" => {
