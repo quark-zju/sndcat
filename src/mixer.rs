@@ -97,6 +97,17 @@ impl Samples {
         self.samples.is_empty()
     }
 
+    /// Adjust loudness. db: decibel; positive: louder, negative: quieter.
+    pub fn adjust_level(&mut self, db: f32) {
+        if db == 0.0 {
+            return;
+        }
+        let amp: f32 = (10.0f32).powf(db / 20.0);
+        for f in self.samples.iter_mut() {
+            *f = *f * amp;
+        }
+    }
+
     /// Connect another samples in-place.
     pub fn concat(&mut self, other: Self) {
         if self.samples.is_empty() {

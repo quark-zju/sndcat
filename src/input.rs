@@ -5,6 +5,7 @@ use portaudio::PortAudio;
 
 mod dev;
 mod gen;
+mod level;
 mod mix;
 mod mp3;
 mod opus;
@@ -87,6 +88,13 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
                 ctx.sample_rate_hint = Some(sample_rate);
                 let input = eval_input(&ctx, &args[0])?;
                 Ok(resample::resample(input, sample_rate, quality))
+            }
+            "level" => {
+                anyhow::ensure!(args.len() >= 2);
+                let db: f32 = args[1].to_string().parse::<f32>()?;
+                let input = eval_input(&ctx, &args[0])?;
+                let input = level::level(input, db);
+                Ok(input)
             }
             "mp3" => {
                 anyhow::ensure!(args.len() >= 1);
