@@ -35,7 +35,7 @@ fn print_help() {
     let help = r#"sndcat
 
 Convert a stream of input audios to specified outputs.
-    
+
     sndcat -i INPUT [-i INPUT ...] -o OUTPUT [-o OUTPUT ...]
 
 INPUT:
@@ -48,6 +48,9 @@ INPUT:
         mp3(path)
             MP3 stream of the given file path.
 
+        opus(path)
+            OggOpus stream of the given file path.
+
         sin(freq)
             Sin wave with given frequency.
 
@@ -56,32 +59,32 @@ INPUT:
 
         resample(input, rate, quality=4)
             Resample a stream. Max quality is 10.
-    
+
     Example:
-    
+
         -i "mix(mp3('1.mp3'), sin(440), dev(10))"
-    
+
     Multiple inputs '-i X -i Y' is equivalent to 'mix(X, Y)'.
-    
+
     For endless streams (ex. dev, or sin(x)), press Ctrl+C to end the input.
 
 OUTPUT:
     An expression specifying an output stream. Supported functions are:
-    
+
         dev(i)
             Audio output device with index i.
             Use 'sndcat list' to see device indexes.
-        
+
         opus(path, samplerate=16000, channels=1, mode=audio)
             Encode into an OggOpus file at the given path.
             mode can be 'audio' or 'voip'.
-        
+
         stats()
             Print statistics to stderr.
 
     Example:
         -o dev(10) -o stats() -o opus('1.opus', 24000, 2)
-    
+
 Other commands:
 
     sndcat list     List devices.

@@ -82,6 +82,23 @@ impl Samples {
         Self { info, samples }
     }
 
+    pub fn millis(&self) -> usize {
+        self.samples.len() * 1000 / (self.info.channels as usize) / (self.info.sample_rate as usize)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.samples.is_empty()
+    }
+
+    /// Connect another samples in-place.
+    pub fn concat(&mut self, other: Self) {
+        if self.samples.is_empty() {
+            self.info = other.info;
+        }
+        assert_eq!(self.info, other.info);
+        self.samples.extend(other.samples);
+    }
+
     /// Mix with another samples in-place.
     fn mix(&mut self, mut other: Samples) -> anyhow::Result<()> {
         log::debug!("mixing {}", &other);

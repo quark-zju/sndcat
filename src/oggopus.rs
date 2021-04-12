@@ -1,10 +1,13 @@
 // https://wiki.xiph.org/OggOpus
 
 use crate::mixer::StreamInfo;
+use std::io::Read;
 
 pub struct Header {
     pub info: StreamInfo,
 }
+
+const HEADER: &[u8] = b"OpusHead";
 
 impl Header {
     /// The first page.
@@ -27,7 +30,6 @@ impl Header {
         // :          optional channel mapping table...                    :
         // |                                                               |
         // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        let header = b"OpusHead";
         let version: u8 = 1;
         let channel_count: u8 = self.info.channels as u8;
         let pre_skip = 0u16;
@@ -35,7 +37,7 @@ impl Header {
         let output_gain: u16 = 0; // Q7.8! Be aware of non-zero values.
         let channel_map: u8 = 0;
         anyhow::ensure!(self.info.channels <= 2);
-        out.extend_from_slice(header);
+        out.extend_from_slice(HEADER);
         out.push(version);
         out.extend_from_slice(&channel_count.to_le_bytes());
         out.extend_from_slice(&pre_skip.to_le_bytes());
@@ -63,5 +65,34 @@ impl Header {
         out.extend_from_slice(&vendor_len.to_le_bytes());
         out.extend_from_slice(vendor);
         Ok(out)
+    }
+
+    pub fn deserialize_head(head: &[u8]) -> anyhow::Result<Self> {
+        let mut cur = std::io::Cursor::new(head);
+        let mut header = vec![0u8; HEADER.len()];
+        cur.read_exact(&mut header)?;
+        if header != HEADER {
+            anyhow::bail!("not an Opus file");
+        }
+
+        let mut buf1 = vec![0u8; 1];
+        cur.read_exact(&mut buf1)?;
+        let version = buf1[0];
+        if version != 1 {
+            anyhow::bail!("unsupported Opus header version: {}", version);
+        }
+
+        cur.read_exact(&mut buf1)?;
+        let channels = buf1[0];
+
+        let header = Self {
+            info: StreamInfo {
+                channels: channels as _,
+                // Opus Decoder always outputs 48000hz.
+                sample_rate: 48000,
+            },
+        };
+
+        Ok(header)
     }
 }

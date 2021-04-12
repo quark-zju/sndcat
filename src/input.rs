@@ -7,6 +7,7 @@ mod dev;
 mod gen;
 mod mix;
 mod mp3;
+mod opus;
 mod resample;
 
 pub struct Input {
@@ -73,7 +74,11 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
                 let path = args[0].to_string();
                 mp3::mp3(&path)
             }
-            // TODO: resample
+            "opus" => {
+                anyhow::ensure!(args.len() >= 1);
+                let path = args[0].to_string();
+                opus::opus(&path)
+            }
             _ => anyhow::bail!("unknown function: {}", name),
         },
     }
