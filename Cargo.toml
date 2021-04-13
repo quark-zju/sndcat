@@ -8,8 +8,7 @@ edition = "2018"
 anyhow = "1"
 audiopus = "0.2"
 ctrlc = "3"
-env_logger = "0.8"
-lalrpop-util = { version = "0.19", features = ["lexer"] }
+env_logger = { version = "0.8", default-features = false, features = ["termcolor", "humantime", "atty"] }
 log = "0.4"
 minimp3 = "0.5"
 ogg = "0.8"
