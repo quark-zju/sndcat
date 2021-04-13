@@ -19,7 +19,13 @@ fn main() {
 
     let code = match cli::run(&args) {
         Err(e) => {
-            eprintln!("Error: {} ({:?})", &e, &e);
+            let s = format!("{}", &e);
+            let d = format!("{:?}", &e);
+            if d == s {
+                eprintln!("Error: {}", &s);
+            } else {
+                eprintln!("Error: {} ({})", &s, &d);
+            }
             255
         }
         Ok(code) => code,
