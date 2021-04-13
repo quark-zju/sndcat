@@ -126,8 +126,9 @@ impl StatsWriter {
             self.meters.info.channels,
         );
         let db = self.meters.current_db();
-        eprint!("{} {} {:+0.1}dB  \r", msg, self.meters.render_bar(), db);
-        log::debug!("{} {:+0.2}dB", msg, db);
+        let stats = format!("{} {} {:+0.1}dB  \r", msg, self.meters.render_bar(), db);
+        eprint!("{}", stats);
+        log::trace!("{} {:+0.2}dB", msg, db);
     }
 }
 
