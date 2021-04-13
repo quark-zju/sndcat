@@ -55,7 +55,7 @@ impl Meters {
         let meter_sample_rate = (self.info.sample_rate / 10) as u64;
         let mut next_total = (total / meter_sample_rate + 1) * meter_sample_rate;
         for &s in &samples.samples {
-            if s > 1.0 || s < -1.0 {
+            if s >= 1.0 || s <= -1.0 {
                 self.clipped = true;
             }
             self.current_power += s * s;
