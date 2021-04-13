@@ -27,11 +27,11 @@ jobs:
       shell: cmd
       run: |
         set VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%
-        %VCPKG_ROOT%\vcpkg install portaudio:x64-windows-static-md
+        vcpkg\build-portaudio.bat
     - name: Print build errors
       if: ${{ failure() }}
       shell: cmd
       run: |
-        type %VCPKG_INSTALLATION_ROOT%\buildtrees\portaudio\git-init-x64-windows-static-md-out.log
+        type vcpkg\buildtrees\portaudio\git-init-x64-windows-static-md-out.log
     - name: Build
       run: cargo build --verbose
