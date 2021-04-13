@@ -106,12 +106,12 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
             }
             "mp3" => {
                 anyhow::ensure!(args.len() >= 1);
-                let path = args[0].to_string();
+                let path = args[0].to_str()?;
                 mp3::mp3(&path)
             }
             "opus" => {
                 anyhow::ensure!(args.len() >= 1);
-                let path = args[0].to_string();
+                let path = args[0].to_str()?;
                 opus::opus(&path)
             }
             _ => anyhow::bail!("unknown function: {}", name),

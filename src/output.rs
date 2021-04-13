@@ -59,7 +59,7 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
             }
             "opus" => {
                 anyhow::ensure!(args.len() > 0);
-                let path = args[0].to_string();
+                let path = args[0].to_str()?;
                 let sample_rate = match args.get(1) {
                     Some(a) => a.to_i64()? as u32,
                     None => 16000,
