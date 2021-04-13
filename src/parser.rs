@@ -89,17 +89,20 @@ impl<'a> Parser<'a> {
         let s = self.text;
         let mut out = String::new();
         for (i, ch) in s[start..].char_indices() {
-            match (i, ch) {
-                (0, '"') | (0, '\'') => {
-                    let (out, end) = self.parse_quoted_string(start + 1, ch)?;
+            match ch {
+                ch if ch.is_whitespace() && out.is_empty() => {
+                    continue;
+                }
+                '"' | '\'' if out.is_empty() => {
+                    let (out, end) = self.parse_quoted_string(start + i + 1, ch)?;
                     assert_eq!(s[end..].chars().next(), Some(ch));
                     return Ok((out, end + ch.len_utf8()));
                 }
-                (_, '(') | (_, ',') | (_, ')') => {
+                '(' | ',' | ')' | '"' | '\'' => {
                     let out = out.trim().to_string();
                     return Ok((out, start + i));
                 }
-                (_, ch) => {
+                ch => {
                     out.push(ch);
                 }
             }
@@ -125,7 +128,7 @@ impl<'a> Parser<'a> {
                             need_comma = false;
                             continue;
                         } else {
-                            return Err(self.error(start, start + i + 1, "unexpected comma"));
+                            return Err(self.error(start + i, start + i + 1, "unexpected comma"));
                         }
                     }
                     ')' => {
@@ -171,7 +174,7 @@ impl<'a> Parser<'a> {
             }
         }
         if end == start {
-            return Err(self.error(start, start + 1, "string cannot be empty"));
+            return Err(self.error(start, start + 1, "unquoted string cannot be empty"));
         }
         Ok((Expr::Name(name.into()), end))
     }
