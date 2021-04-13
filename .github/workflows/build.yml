@@ -1,0 +1,37 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: sudo apt install -y build-essential autoconf portaudio19-dev libopus-dev
+    - name: Build
+      run: cargo build --verbose
+
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build portaudio
+      shell: cmd
+      run: |
+        set VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%
+        %VCPKG_ROOT%\vcpkg install portaudio:x64-windows-static-md
+    - name: Print build errors
+      if: ${{ failure() }}
+      shell: cmd
+      run: |
+        type %VCPKG_INSTALLATION_ROOT%\buildtrees\portaudio\git-init-x64-windows-static-md-out.log
+    - name: Build
+      run: cargo build --verbose
