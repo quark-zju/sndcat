@@ -4,9 +4,6 @@ vcpkg_from_github(
     REPO audacity/audacity
     REF Audacity-3.0.0
     SHA512 f75f2f62c9a8e100b8b138826554ca8af43467900b138c4dc6189c1237c961c525e3043928b63ee25831820ae02bac68aa977e6334c32158eec3821771a91701
-    PATCHES
-        fix-library-can-not-be-found.patch
-        fix-include.patch
 )
 
 string(COMPARE EQUAL ${VCPKG_LIBRARY_LINKAGE} dynamic PA_BUILD_SHARED)
