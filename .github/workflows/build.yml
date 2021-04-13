@@ -32,6 +32,6 @@ jobs:
       if: ${{ failure() }}
       shell: cmd
       run: |
-        type %VCPKG_INSTALLATION_ROOT%/buildtrees/portaudio/git-init-x64-windows-static-md-out.log
+        type %VCPKG_INSTALLATION_ROOT%\buildtrees\portaudio\git-init-x64-windows-static-md-out.log
     - name: Build
       run: cargo build --verbose
