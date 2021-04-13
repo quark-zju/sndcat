@@ -1,8 +1,9 @@
 vcpkg_fail_port_install(ON_TARGET "uwp")
-vcpkg_from_git(
+vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    URL https://github.com/audacity/audacity.git
-    REF 50c30d9ff8ba03a61e85cf52e5c5f68564df6d63
+    REPO audacity/audacity
+    REF Audacity-3.0.0
+    SHA512 f75f2f62c9a8e100b8b138826554ca8af43467900b138c4dc6189c1237c961c525e3043928b63ee25831820ae02bac68aa977e6334c32158eec3821771a91701
     PATCHES
         fix-library-can-not-be-found.patch
         fix-include.patch
