@@ -102,7 +102,15 @@ Then build `sndcat` using Rust toolchain `cargo`:
 
     cargo install --path .
 
-### Other platforms
+Currently, Windows is the main platform that `sndcat` is tested.
 
-Currently only Windows is tested. The code base uses cross-platform libraries
-so building on other platforms shouldn't be too hard. PRs are welcome!
+### Linux
+
+Install dependencies first. For example, For example, Debian/Ubuntu might use
+the following command:
+
+    sudo apt install build-essential autoconf portaudio19-dev libopus-dev
+
+Then build `sndcat` using Rust toolchain `cargo`:
+
+    cargo install --path .
