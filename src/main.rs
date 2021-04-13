@@ -24,7 +24,7 @@ fn main() {
             if d == s {
                 eprintln!("Error: {}", &s);
             } else {
-                eprintln!("Error: {} ({})", &s, &d);
+                eprintln!("Error: {}\nDetail: {}", &s, &d);
             }
             255
         }
