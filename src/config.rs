@@ -29,3 +29,23 @@ pub static MAIN_THREAD_PRIORITY: Lazy<u32> = Lazy::new(|| {
     }
     result.min(100).max(0)
 });
+
+pub static MAX_OUTPUT_CHANNELS: Lazy<i32> = Lazy::new(|| {
+    let mut result = 2;
+    if let Ok(v) = std::env::var("SNDCAT_MAX_OUTPUT_CHANNELS") {
+        if let Ok(v) = v.parse() {
+            result = v;
+        }
+    }
+    result.min(64).max(1)
+});
+
+pub static MAX_INPUT_CHANNELS: Lazy<i32> = Lazy::new(|| {
+    let mut result = 2;
+    if let Ok(v) = std::env::var("SNDCAT_MAX_INPUT_CHANNELS") {
+        if let Ok(v) = v.parse() {
+            result = v;
+        }
+    }
+    result.min(64).max(1)
+});

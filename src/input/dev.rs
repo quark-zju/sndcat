@@ -9,10 +9,12 @@ use portaudio::PortAudio;
 struct ForceSend<T>(T);
 unsafe impl<T> Send for ForceSend<T> {}
 
-pub fn input_device(pa: &PortAudio, i: u32) -> anyhow::Result<Input> {
+pub fn input_device(pa: &PortAudio, i: u32, max_channel: Option<i32>) -> anyhow::Result<Input> {
     let i = DeviceIndex(i);
     let info = pa.device_info(i)?;
-    let channel_count = info.max_input_channels;
+    let channel_count = info
+        .max_input_channels
+        .min(max_channel.unwrap_or(*crate::config::MAX_INPUT_CHANNELS));
     let sample_rate = info.default_sample_rate as u32;
     let frame_size = (sample_rate as u64) / 16;
     let params: Parameters<f32> = Parameters::new(i, channel_count as _, true, 0.0);

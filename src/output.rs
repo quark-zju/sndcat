@@ -46,15 +46,17 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
             }
         }
         Expr::Fn(name, args) => match name.as_ref() {
-            "dev" => match &args[..] {
-                [Expr::Name(i)] if i.parse::<u32>().is_ok() => {
-                    let i = i.parse::<u32>()?;
-                    let output = dev::output_device(ctx.pa, i)?;
-                    // Not moving to background. Want the blocking behavior.
-                    Ok(output)
-                }
-                _ => anyhow::bail!("unknown args: {:?}", args),
-            },
+            "dev" => {
+                anyhow::ensure!(args.len() > 0);
+                let i = args[0].to_i64()? as u32;
+                let max_channels = match args.get(1) {
+                    Some(a) => Some(a.to_i64()? as i32),
+                    None => None,
+                };
+                let output = dev::output_device(ctx.pa, i, max_channels)?;
+                // Not moving to background. Want the blocking behavior.
+                Ok(output)
+            }
             "opus" => {
                 anyhow::ensure!(args.len() > 0);
                 let path = args[0].to_string();

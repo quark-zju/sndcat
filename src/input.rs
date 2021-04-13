@@ -48,13 +48,15 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
             }
         }
         Expr::Fn(name, args) => match name.as_ref() {
-            "dev" => match &args[..] {
-                [Expr::Name(i)] if i.parse::<u32>().is_ok() => {
-                    let i = i.parse::<u32>()?;
-                    Ok(dev::input_device(ctx.pa, i)?)
-                }
-                _ => anyhow::bail!("unknown args: {:?}", args),
-            },
+            "dev" => {
+                anyhow::ensure!(args.len() > 0);
+                let i = args[0].to_i64()? as u32;
+                let max_channels = match args.get(1) {
+                    Some(a) => Some(a.to_i64()? as i32),
+                    None => None,
+                };
+                Ok(dev::input_device(ctx.pa, i, max_channels)?)
+            }
             "sin" => {
                 let params = match &args[..] {
                     [Expr::Name(s)] => s,

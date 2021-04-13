@@ -8,10 +8,12 @@ use portaudio::DeviceIndex;
 use portaudio::PortAudio;
 use std::sync::Arc;
 
-pub fn output_device(pa: &PortAudio, i: u32) -> anyhow::Result<Output> {
+pub fn output_device(pa: &PortAudio, i: u32, max_channel: Option<i32>) -> anyhow::Result<Output> {
     let i = DeviceIndex(i);
     let info = pa.device_info(i)?;
-    let channel_count = info.max_output_channels;
+    let channel_count = info
+        .max_output_channels
+        .min(max_channel.unwrap_or(*crate::config::MAX_OUTPUT_CHANNELS));
     let sample_rate = info.default_sample_rate as u32;
     let frame_size = (sample_rate as u64) / 10;
     let params: Parameters<f32> = Parameters::new(i, channel_count as _, true, 0.0);

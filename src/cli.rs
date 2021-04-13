@@ -85,7 +85,7 @@ INPUT:
 OUTPUT:
     An expression specifying an output stream. Supported functions are:
 
-        dev(i)
+        dev(i, max_channels=2)
             Audio output device with index i.
             Use 'sndcat list' to see device indexes.
             Alias: i, if i is an integer.
@@ -123,6 +123,9 @@ Environment variables:
                     (milliseconds, default: 5).
     SNDCAT_MAIN_THREAD_PRIORITY
                     Main thread priority (0-100, default: 80).
+    SNDCAT_MAX_INPUT_CHANNELS
+    SNDCAT_MAX_OUTPUT_CHANNELS
+                    Maximum channels for devices. (1-64, default: 2).
 "#;
     println!("{}", help);
 }
