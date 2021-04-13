@@ -24,6 +24,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build portaudio
-      run: vcpkg-ports\build-portaudio.bat
+      shell: cmd
+      run: |
+        set VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%
+        %VCPKG_ROOT%\vcpkg install portaudio:x64-windows-static-md
     - name: Build
       run: cargo build --verbose
