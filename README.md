@@ -90,7 +90,8 @@ Specifying `-o` multiple times means writing to them simultaneously.
 
 ### Windows
 
-Install [vcpkg](https://github.com/Microsoft/vcpkg) first. Then build portaudio:
+Install [vcpkg](https://github.com/Microsoft/vcpkg) first. Then build
+portaudio in the local `vcpkg` directory:
 
     vcpkg\build-portaudio.bat
 

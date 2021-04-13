@@ -1,6 +1,9 @@
 fn main() {
     #[cfg(windows)]
     {
-        let _vcpkg_portaudio = vcpkg::find_package("portaudio").unwrap();
+        let mut config = vcpkg::Config::new();
+        let vcpkg_root = std::env::current_dir().unwrap().join("vcpkg");
+        config.vcpkg_root(vcpkg_root);
+        config.find_package("portaudio").unwrap();
     }
 }
