@@ -84,9 +84,9 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
             }
             "resample" => {
                 anyhow::ensure!(args.len() >= 2);
-                let sample_rate = args[1].to_string().parse::<u32>()?;
+                let sample_rate = args[1].to_i64()? as u32;
                 let quality = if let Some(arg) = args.get(2) {
-                    arg.to_string().parse::<usize>().ok()
+                    Some(arg.to_i64()? as usize)
                 } else {
                     None
                 };
@@ -97,7 +97,7 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
             }
             "level" => {
                 anyhow::ensure!(args.len() >= 2);
-                let db: f32 = args[1].to_string().parse::<f32>()?;
+                let db: f32 = args[1].to_str()?.parse::<f32>()?;
                 let input = eval_input(&ctx, &args[0])?;
                 let input = level::level(input, db);
                 Ok(input)

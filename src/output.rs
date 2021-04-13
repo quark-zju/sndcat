@@ -59,17 +59,14 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
                 anyhow::ensure!(args.len() > 0);
                 let path = args[0].to_string();
                 let sample_rate = match args.get(1) {
-                    Some(a) => a.to_string().parse()?,
+                    Some(a) => a.to_i64()? as u32,
                     None => 16000,
                 };
                 let channels = match args.get(2) {
-                    Some(a) => a.to_string().parse()?,
+                    Some(a) => a.to_i64()? as u16,
                     None => 1,
                 };
-                let mode = args
-                    .get(3)
-                    .map(|a| a.to_string())
-                    .unwrap_or_else(|| "audio".to_string());
+                let mode = args.get(3).and_then(|a| a.to_str().ok()).unwrap_or("audio");
                 let info = StreamInfo {
                     sample_rate,
                     channels,
@@ -80,13 +77,14 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
                 Ok(output)
             }
             "tcp16le" => {
-                let port: u16 = args[0].to_string().parse()?;
+                anyhow::ensure!(args.len() > 0);
+                let port: u16 = args[0].to_i64()? as u16;
                 let sample_rate = match args.get(1) {
-                    Some(a) => a.to_string().parse()?,
+                    Some(a) => a.to_i64()? as u32,
                     None => 16000,
                 };
                 let channels = match args.get(2) {
-                    Some(a) => a.to_string().parse()?,
+                    Some(a) => a.to_i64()? as u16,
                     None => 1,
                 };
                 let info = StreamInfo {

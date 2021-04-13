@@ -43,4 +43,32 @@ impl Expr {
     pub fn parse(s: &str) -> anyhow::Result<Self> {
         crate::parser::parse(s).map_err(|e| anyhow::format_err!("{}", e))
     }
+
+    /// Parse as an integer.
+    pub fn to_i64(&self) -> anyhow::Result<i64> {
+        let result = match self {
+            Expr::Name(n) => match n.as_str() {
+                "48k" => 48000,
+                "44k" => 44100,
+                "32k" => 32000,
+                "24k" => 24000,
+                "16k" => 16000,
+                "8k" => 8000,
+                "mono" => 1,
+                "stereo" => 2,
+                n => n.parse()?,
+            },
+            _ => anyhow::bail!("{} is not an integer", self),
+        };
+        Ok(result)
+    }
+
+    /// Parse as a plain string.
+    pub fn to_str(&self) -> anyhow::Result<&str> {
+        let result = match self {
+            Expr::Name(n) => n,
+            _ => anyhow::bail!("{} is not a string", self),
+        };
+        Ok(result)
+    }
 }
