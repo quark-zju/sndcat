@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::fmt;
 
 /// A node in the parsed AST.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Expr {
     /// A plain string name.
     Name(String),
@@ -11,30 +11,28 @@ pub enum Expr {
     Fn(Cow<'static, str>, Vec<Expr>),
 }
 
-impl fmt::Debug for Expr {
+impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Expr::Name(s) => f.write_str(&s)?,
+            Expr::Name(s) => {
+                write!(f, "{:?}", s)?;
+            }
             Expr::Fn(name, args) => {
-                if args.is_empty() {
-                    f.write_str(name)?;
-                    f.write_str("()")?;
-                } else {
-                    let mut list = f.debug_tuple(&name);
-                    for arg in args {
-                        list.field(arg);
+                f.write_str(name)?;
+                f.write_str("(")?;
+                let mut first = true;
+                for arg in args {
+                    if first {
+                        first = false;
+                    } else {
+                        f.write_str(",")?;
                     }
-                    list.finish()?;
+                    arg.fmt(f)?;
                 }
+                f.write_str(")")?;
             }
         }
         Ok(())
-    }
-}
-
-impl fmt::Display for Expr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        <Self as fmt::Debug>::fmt(self, f)
     }
 }
 
