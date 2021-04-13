@@ -92,7 +92,7 @@ Specifying `-o` multiple times means writing to them simultaneously.
 
 Install [vcpkg](https://github.com/Microsoft/vcpkg) first. Then build portaudio:
 
-    vcpkg-ports\build-portaudio.bat
+    vcpkg\build-portaudio.bat
 
 This will build portaudio patched by
 [Audicaty](https://github.com/audacity/audacity) which enables loopback
