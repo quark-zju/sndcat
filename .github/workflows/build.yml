@@ -1,4 +1,4 @@
-name: Rust
+name: build
 
 on:
   push:
@@ -28,10 +28,7 @@ jobs:
       run: |
         set VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%
         vcpkg\build-portaudio.bat
-    - name: Print build errors
-      if: ${{ failure() }}
-      shell: cmd
-      run: |
-        type vcpkg\buildtrees\portaudio\git-init-x64-windows-static-md-out.log
     - name: Build
       run: cargo build --verbose
+    - name: Run
+      run: cargo run -- help

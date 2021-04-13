@@ -3,7 +3,6 @@
 setlocal
 cd /d %~dp0
 
-if not defined VCPKG_ROOT if defined VCPKG_INSTALLATION_ROOT set VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%
 if not defined VCPKG_ROOT echo vcpkg seems missing?
 
 %VCPKG_ROOT%\vcpkg ^
@@ -11,4 +10,3 @@ if not defined VCPKG_ROOT echo vcpkg seems missing?
   --x-buildtrees-root=%CD%\buildtrees ^
   --x-install-root=%CD%\installed ^
   --x-packages-root=%CD%\packages ^
-  --downloads-root=%CD%\downloads
