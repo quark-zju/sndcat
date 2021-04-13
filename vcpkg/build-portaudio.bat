@@ -10,4 +10,5 @@ if not defined VCPKG_ROOT echo vcpkg seems missing?
   --overlay-ports=%CD%\ports install portaudio:x64-windows-static-md ^
   --x-buildtrees-root=%CD%\buildtrees ^
   --x-install-root=%CD%\installed ^
-  --x-packages-root=%CD%\packages
+  --x-packages-root=%CD%\packages ^
+  --downloads-root=%CD%\downloads
