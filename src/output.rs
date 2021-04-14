@@ -7,6 +7,7 @@ use std::sync::Arc;
 mod background;
 mod dev;
 mod opus;
+mod stdout;
 mod tcp;
 mod terminal;
 
@@ -94,6 +95,22 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
                     channels,
                 };
                 let output = tcp::tcp_i16_server(port, info)?;
+                Ok(output)
+            }
+            "out16le" => {
+                let sample_rate = match args.get(0) {
+                    Some(a) => a.to_i64()? as u32,
+                    None => 16000,
+                };
+                let channels = match args.get(1) {
+                    Some(a) => a.to_i64()? as u16,
+                    None => 1,
+                };
+                let info = StreamInfo {
+                    sample_rate,
+                    channels,
+                };
+                let output = stdout::stdout_i16(info);
                 Ok(output)
             }
             "stats" => {
