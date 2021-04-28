@@ -4,6 +4,8 @@ use crate::output::Output;
 use crate::output::OutputWriter;
 use anyhow::Context;
 use std::collections::VecDeque;
+use std::fs;
+use std::path::Path;
 use std::sync::Arc;
 
 pub fn opus(path: &str, info: StreamInfo, mode: &str) -> anyhow::Result<Output> {
@@ -46,9 +48,10 @@ pub fn opus(path: &str, info: StreamInfo, mode: &str) -> anyhow::Result<Output> 
 
     let writer = {
         log::debug!("opening file {}", path);
+        rename_existing_best_effort(&Path::new(path))?;
         let file = std::fs::OpenOptions::new()
             .write(true)
-            .create(true)
+            .create_new(true)
             .truncate(true)
             .open(path)
             .context(path.to_string())?;
@@ -190,4 +193,23 @@ impl<T: std::io::Write + Send + 'static> OutputWriter for OggWriter<T> {
         log::debug!("Flushed OGG file");
         Ok(())
     }
+}
+
+/// Rename existing files to avoid overwriting files accidentally.
+///
+/// This is a simple implementation and could be racy.
+fn rename_existing_best_effort(path: &Path) -> std::io::Result<()> {
+    if path.exists() {
+        let ext = path.extension().unwrap_or_default();
+        let without_ext = path.with_extension("").display().to_string();
+        for i in 1usize.. {
+            let new_path_str = format!("{}-{}", &without_ext, i);
+            let new_path = Path::new(&new_path_str).with_extension(ext);
+            if new_path.exists() {
+                continue;
+            }
+            return fs::rename(path, new_path);
+        }
+    }
+    Ok(())
 }
