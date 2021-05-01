@@ -3,9 +3,8 @@
 A command line utility that works on audio streams.
 
 Like [`socat`](https://linux.die.net/man/1/socat), `sndcat` has a concept of
-inputs and outputs (called "source" and "sink" in some places). `sndcat`
-reads from input, does necessary processing (ex. resampling), then writes to
-outputs.
+inputs and outputs (or, "source" and "sink"). `sndcat` reads from input,
+does some necessary processing (ex. resampling), then writes to outputs.
 
 ## Usage
 
