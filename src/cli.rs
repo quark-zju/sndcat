@@ -157,11 +157,11 @@ pub fn run(args: &[&str]) -> anyhow::Result<i32> {
                     output_args.push(a);
                 }
             }
-            "list" => {
+            "list" | "--list" | "-l" | "/l" | "l" => {
                 print_device_list(&pa)?;
                 return Ok(0);
             }
-            "help" => {
+            "help" | "--help" | "-h" | "/?" | "h" => {
                 print_help();
                 return Ok(0);
             }
