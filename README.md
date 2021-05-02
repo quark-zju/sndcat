@@ -1,5 +1,7 @@
 # sndcat
 
+[![build](https://github.com/quark-zju/sndcat/actions/workflows/build.yml/badge.svg)](https://github.com/quark-zju/sndcat/actions/workflows/build.yml)
+
 A command line utility that works on audio streams.
 
 Like [`socat`](https://linux.die.net/man/1/socat), `sndcat` has a concept of
