@@ -4,3 +4,7 @@ vcpkg/installed
 vcpkg/packages
 vcpkg/downloads
 target/
+*.mp3
+*.wav
+*.opus
+*.ogg

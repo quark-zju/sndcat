@@ -2,21 +2,36 @@ use super::Output;
 use super::OutputWriter;
 use crate::mixer::StreamInfo;
 use anyhow::Context;
+use std::fs;
 use std::io::BufWriter;
+use std::io::ErrorKind;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write as _;
 
 /// 16-bit PCM WAV output.
 pub fn wav(path: &str) -> anyhow::Result<Output> {
-    let file = std::fs::OpenOptions::new()
+    let (file, header_written) = match fs::OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(path)
-        .context(path.to_string())?;
+    {
+        Ok(file) => (file, false),
+        Err(e) if e.kind() == ErrorKind::AlreadyExists => {
+            log::debug!("appending to {}", path);
+            // Append instead.
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .open(path)
+                .context(path.to_string())?;
+            file.seek(SeekFrom::End(0))?;
+            (file, true)
+        }
+        Err(e) => return Err(e).context(path.to_string()),
+    };
     let out = BufWriter::with_capacity(512000, file);
     let wav = WavWriter {
-        header_written: false,
+        header_written,
         out: Some(out),
     };
     Ok(Output {
@@ -36,6 +51,7 @@ impl WavWriter {
         if self.header_written {
             return Ok(());
         }
+        log::debug!("writing WAV header");
         if let Some(out) = self.out.as_mut() {
             // Master RIFF chunk.
             out.write_all(b"RIFF")?;
@@ -77,8 +93,9 @@ impl OutputWriter for WavWriter {
         if self.header_written {
             if let Some(out) = self.out.take() {
                 // Fill the placeholders.
+                log::debug!("updating WAV header");
                 let mut file = out.into_inner()?;
-                let total_size = file.seek(SeekFrom::Current(0))? as u32;
+                let total_size = file.seek(SeekFrom::End(0))? as u32;
                 let riff_file_size = total_size - 8;
                 file.seek(SeekFrom::Start(4))?;
                 file.write_all(&riff_file_size.to_le_bytes())?;

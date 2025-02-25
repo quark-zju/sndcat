@@ -47,14 +47,17 @@ INPUT:
             Audio input device with index i.
             Use 'sndcat list' to see device indexes.
             Alias: i, if i is an integer.
+            i.e. 10 means dev(10).
 
         mp3(path)
             MP3 stream of the given file path.
             Alias: path, if path ends with '.mp3'.
+            i.e. a.mp3 means mp3('a.mp3').
 
         opus(path)
             OggOpus stream of the given file path.
             Alias: path, if path ends with '.opus'.
+            i.e. a.opus means opus('a.opus').
 
         sin(freq)
             Sin wave with given frequency.
@@ -99,6 +102,8 @@ OUTPUT:
 
         wav(path)
             Write a 16-bit PCM WAV file at the given path.
+            If path exists, it will be appended, assuming
+            channel and sample rate are the same.
             Alias: path, if path ends with '.wav'.
             i.e. a.wav means wav('a.wav').
 
