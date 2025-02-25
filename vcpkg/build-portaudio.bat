@@ -10,3 +10,4 @@ if not defined VCPKG_ROOT echo vcpkg seems missing?
   --x-buildtrees-root=%CD%\buildtrees ^
   --x-install-root=%CD%\installed ^
   --x-packages-root=%CD%\packages ^
+  --vcpkg-root=%VCPKG_ROOT%

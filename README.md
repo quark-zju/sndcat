@@ -94,6 +94,7 @@ Specifying `-o` multiple times means writing to them simultaneously.
 Install [vcpkg](https://github.com/Microsoft/vcpkg) first. Then build
 portaudio in the local `vcpkg` directory:
 
+    set VCPKG_ROOT=C:\vcpkg
     vcpkg\build-portaudio.bat
 
 This will build portaudio patched by
