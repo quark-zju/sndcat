@@ -89,11 +89,18 @@ OUTPUT:
             Audio output device with index i.
             Use 'sndcat list' to see device indexes.
             Alias: i, if i is an integer.
+            i.e. 10 means dev(10).
 
         opus(path, samplerate=16000, channels=1, mode=audio)
             Encode into an OggOpus file at the given path.
             mode can be 'audio' or 'voip'.
             Alias: path, if path ends with '.opus'.
+            i.e. a.opus means opus('a.opus').
+
+        wav(path)
+            Write a 16-bit PCM WAV file at the given path.
+            Alias: path, if path ends with '.wav'.
+            i.e. a.wav means wav('a.wav').
 
         stats()
             Print statistics to stderr.

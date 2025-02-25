@@ -10,6 +10,7 @@ mod opus;
 mod stdout;
 mod tcp;
 mod terminal;
+mod wav;
 
 pub trait OutputWriter: Send + 'static {
     fn write(&mut self, samples: Arc<Samples>) -> anyhow::Result<()>;
@@ -36,6 +37,9 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
                     ctx,
                     &Expr::Fn("opus".into(), vec![Expr::Name(name.clone())]),
                 )
+            } else if name.ends_with(".wav") {
+                // a.wav => wav(a.wav)
+                eval_output(ctx, &Expr::Fn("wav".into(), vec![Expr::Name(name.clone())]))
             } else if name == "-" {
                 // - => stats()
                 eval_output(ctx, &Expr::Fn("stats".into(), vec![]))
@@ -77,6 +81,12 @@ pub fn eval_output(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Output> {
                 let output = opus::opus(&path, info, &mode)?;
                 // Move to background so it does not block main thread.
                 let output = background::background(output, None, 5)?;
+                Ok(output)
+            }
+            "wav" => {
+                anyhow::ensure!(args.len() > 0);
+                let path = args[0].to_str()?;
+                let output = wav::wav(&path)?;
                 Ok(output)
             }
             "tcp16le" => {
