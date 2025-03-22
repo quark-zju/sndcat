@@ -3,6 +3,7 @@
 mod ast;
 mod cli;
 mod config;
+pub(crate) mod dev;
 mod input;
 mod mixer;
 mod oggopus;
