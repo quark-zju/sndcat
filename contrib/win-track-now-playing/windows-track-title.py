@@ -5,6 +5,9 @@ import asyncio
 from winsdk.windows.media.control import (
     GlobalSystemMediaTransportControlsSessionManager,
 )
+from winsdk.windows.media.control import (
+    GlobalSystemMediaTransportControlsSessionPlaybackStatus as PlaybackStatus,
+)
 
 
 async def get_media_info():
@@ -12,7 +15,21 @@ async def get_media_info():
     current_session = sessions.get_current_session()
     if current_session:
         info = await current_session.try_get_media_properties_async()
-        return {"title": info.title, "artist": info.artist, "album": info.album_title}
+        playback_info = current_session.get_playback_info()
+        status_dict = {
+            PlaybackStatus.PLAYING: "Playing",
+            PlaybackStatus.PAUSED: "Paused",
+            PlaybackStatus.STOPPED: "Stopped",
+            PlaybackStatus.CLOSED: "Closed",
+            PlaybackStatus.CHANGING: "Changing",
+        }
+        status = status_dict.get(playback_info.playback_status, "Unknown")
+        return {
+            "title": info.title,
+            "artist": info.artist,
+            "album": info.album_title,
+            "status": status,
+        }
 
 
 async def main():
