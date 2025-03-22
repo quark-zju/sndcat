@@ -19,11 +19,11 @@ Convert a stream of input audios to specified outputs.
 INPUT:
     An expression specifying an input stream. Supported functions are:
 
-        dev(i)
-            Audio input device with index i.
+        dev(x)
+            Audio input device with name substring x or index x.
             Use 'sndcat list' to see device indexes.
-            Alias: i, if i is an integer.
-            i.e. 10 means dev(10).
+            Alias: x, if s does not match other alises.
+            i.e. 10 means dev(10), Hi-Res means dev(Hi-Res).
 
         mp3(path)
             MP3 stream of the given file path.
@@ -65,10 +65,10 @@ OUTPUT:
     An expression specifying an output stream. Supported functions are:
 
         dev(i, max_channels=2)
-            Audio output device with index i.
+            Audio input device with name substring x or index x.
             Use 'sndcat list' to see device indexes.
-            Alias: i, if i is an integer.
-            i.e. 10 means dev(10).
+            Alias: x, if s does not match other alises.
+            i.e. 10 means dev(10), Hi-Res means dev(Hi-Res).
 
         opus(path, samplerate=16000, channels=1, mode=audio)
             Encode into an OggOpus file at the given path.

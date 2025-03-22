@@ -37,20 +37,21 @@ pub fn eval_input(ctx: &EvalContext, expr: &Expr) -> anyhow::Result<Input> {
                     ctx,
                     &Expr::Fn("opus".into(), vec![Expr::Name(name.clone())]),
                 )
-            } else if name.parse::<u16>().is_ok() {
-                // 42 => dev(42)
-                eval_input(ctx, &Expr::Fn("dev".into(), vec![Expr::Name(name.clone())]))
             } else if name.to_ascii_lowercase() == "nul" {
                 // nul => silence()
                 eval_input(ctx, &Expr::Fn("silence".into(), vec![]))
             } else {
-                anyhow::bail!("unknown input: {}", name);
+                // 42 => dev(42); foo => dev(foo)
+                eval_input(ctx, &Expr::Fn("dev".into(), vec![Expr::Name(name.clone())]))
             }
         }
         Expr::Fn(name, args) => match name.as_ref() {
             "dev" => {
                 anyhow::ensure!(args.len() > 0);
-                let i = args[0].to_i64()? as u32;
+                let i = match args[0].to_i64() {
+                    Ok(v) => v as u32,
+                    Err(_) => crate::dev::find_device(ctx.pa, args[0].to_str()?, true)?,
+                };
                 let max_channels = match args.get(1) {
                     Some(a) => Some(a.to_i64()? as i32),
                     None => None,
