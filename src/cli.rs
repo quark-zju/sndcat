@@ -8,10 +8,15 @@ use std::sync::atomic::Ordering::SeqCst;
 use std::sync::Arc;
 use thread_priority::ThreadPriority;
 
-fn print_device_list(pa: &PortAudio) -> Result<(), portaudio::Error> {
+fn print_device_list(pa: &PortAudio, filter: Option<&str>) -> Result<(), portaudio::Error> {
     let ds = pa.devices()?;
     for d in ds {
         let (i, d) = d?;
+        if let Some(filter) = filter {
+            if !d.name.contains(filter) {
+                continue;
+            }
+        }
 
         let ty = match (d.max_input_channels, d.max_output_channels) {
             (0, 0) => "NUL",
@@ -122,8 +127,8 @@ OUTPUT:
 
 Other commands:
 
-    sndcat list     List devices.
-    sndcat help     Print this message.
+    sndcat list [name]  List devices.
+    sndcat help         Print this message.
 
 Environment variables:
 
@@ -170,7 +175,9 @@ pub fn run(args: &[&str]) -> anyhow::Result<i32> {
                 }
             }
             "list" | "--list" | "-l" | "/l" | "l" => {
-                print_device_list(&pa)?;
+                arg_index += 1;
+                let filter = args.get(arg_index).map(|&s| s);
+                print_device_list(&pa, filter)?;
                 return Ok(0);
             }
             "help" | "--help" | "-h" | "/?" | "h" => {
