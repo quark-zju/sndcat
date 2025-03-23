@@ -121,6 +121,8 @@ class WavReader:
             "--silent",
             "-",
         ]
+        if os.path.exists(out_path):
+            os.unlink(out_path)
         proc = subprocess.Popen(args, stdin=subprocess.PIPE)
         sample_bytes = self.read_raw_bytes(start, duraion)
         proc.stdin.write(sample_bytes)
@@ -219,11 +221,10 @@ def main():
     out_dir = os.path.join("out", os.path.splitext(os.path.basename(wav.filename))[0])
     os.makedirs(out_dir, exist_ok=True)
     for i, (start, duration, info) in enumerate(tracks):
-        duration = int(duration * 8 + 7) // 8
+        # duration = int(duration * 8 + 7) // 8
         print(f"Encoding {i+1} of {len(tracks)}")
-        wav.flac_encode(
-            start, duration, os.path.join(out_dir, "part%04d.flac" % (i + 1)), info
-        )
+        out_path = os.path.join(out_dir, "part%04d.flac" % (i + 1))
+        wav.flac_encode(start, duration, out_path, info)
 
 
 def fmt_time(seconds: int) -> str:
