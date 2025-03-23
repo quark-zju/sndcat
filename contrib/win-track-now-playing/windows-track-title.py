@@ -35,7 +35,10 @@ async def get_media_info():
 async def main():
     last_info = None
     while True:
-        info = await get_media_info()
+        try:
+            info = await get_media_info()
+        except IOError:
+            continue
         if last_info != info:
             s = json.dumps({"time": time.time(), "info": info})
             with open("track.log", "a") as f:
