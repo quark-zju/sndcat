@@ -8,6 +8,7 @@ import typing
 import fractions
 import os
 import bisect
+import subprocess
 
 
 # This is an example of a WAV file header (44 bytes). Data is stored in little-endian byte order.
@@ -54,7 +55,7 @@ class WavReader:
             os.path.getsize(self.filename) - self.offset_to_data
         ) / self.bytes_per_second
 
-    def read(self, start_seconds: float, duraion_seconds=0.125) -> array.array:
+    def read_raw_bytes(self, start_seconds: float, duraion_seconds=0.125) -> bytes:
         """Read samples starting at `start_seconds` for `duraion_seconds`."""
         start_offset = int(fractions.Fraction(start_seconds) * self.sample_rate) * (
             self.bytes_per_sample * self.channels
@@ -62,7 +63,11 @@ class WavReader:
         self.wav_file.seek(self.offset_to_data + start_offset)
         sample_count = int(fractions.Fraction(duraion_seconds) * self.sample_rate)
         byte_len = sample_count * (self.bytes_per_sample * self.channels)
-        sample_bytes = self.wav_file.read(byte_len)
+        return self.wav_file.read(byte_len)
+
+    def read(self, start_seconds: float, duraion_seconds=0.125) -> array.array:
+        """Read samples starting at `start_seconds` for `duraion_seconds`."""
+        sample_bytes = self.read_raw_bytes(start_seconds, duraion_seconds)
         # Assuming 16-bit signed PCM.
         assert self.bytes_per_sample == 2
         return array.array("h", sample_bytes)
@@ -95,18 +100,48 @@ class WavReader:
         #     return best_second
         return None
 
+    def flac_encode(self, start, duraion, out_path, info=None):
+        args = [
+            os.getenv("flac") or "flac",
+        ]
+        if info is not None:
+            for tag in ("artist", "album", "title"):
+                value = info.get(tag)
+                if value:
+                    args.append("--tag=%s=%s" % (tag.upper(), value.strip()))
+        args += [
+            "--best",
+            "--output-name=%s" % out_path,
+            "--sign=signed",
+            "--channels=%d" % self.channels,
+            "--endian=little",
+            "--bps=%d" % (self.bytes_per_sample * 8),
+            "--sample-rate=%d" % self.sample_rate,
+            "--force-raw-format",
+            "--silent",
+            "-",
+        ]
+        proc = subprocess.Popen(args, stdin=subprocess.PIPE)
+        sample_bytes = self.read_raw_bytes(start, duraion)
+        proc.stdin.write(sample_bytes)
+        proc.stdin.close()
+        proc.wait()
+        if proc.returncode != 0:
+            raise RuntimeError("FLAC encoding failed.")
 
-def parse_timestamp_info(filename) -> typing.Iterable[tuple[int, str, bool]]:
+
+def parse_timestamp_info(filename) -> typing.Iterable[tuple[int, str, object, bool]]:
     with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             try:
                 obj = json.loads(line)
                 time = obj["time"]
-                title = obj["info"]["title"]
-                album = obj["info"]["album"]
-                artist = obj["info"]["artist"]
-                is_playing = obj["info"]["status"] == "Playing"
-                yield time, f"{artist}/{album}/{title}", is_playing
+                info = obj["info"]
+                title = info["title"]
+                album = info["album"]
+                artist = info["artist"]
+                is_playing = info["status"] == "Playing"
+                yield time, f"{artist}/{album}/{title}", info, is_playing
             except Exception:
                 pass
 
@@ -140,7 +175,11 @@ def main():
     # bisect in timestamps to find matching start track.
     start = bisect.bisect_left(timestamps, (wav_ctime, ""))
     first = True
-    for time, title, is_playing in timestamps[start:]:
+    tracks = []
+    last_start = 0
+    last_info = None
+    bad = False
+    for time, title, info, is_playing in timestamps[start:]:
         if not is_playing:
             continue
         if first:
@@ -150,6 +189,7 @@ def main():
         print("%s %s" % (fmt_time(time), title))
         if time > wav_length:
             print("  End of WAV file.")
+            tracks.append((last_start, wav_length - last_start, last_info))
             break
         if not first:
             silence_time = wav.find_silence_around(time)
@@ -158,9 +198,24 @@ def main():
                     "  Silence gap found at %s %.2f"
                     % (fmt_time(silence_time), silence_time - time)
                 )
+                tracks.append((last_start, silence_time - last_start, last_info))
+                last_start = silence_time
             else:
                 print("  NO SILENCE GAP FOUND!")
+                bad = True
+        last_info = info
         first = False
+    if bad:
+        print("WARNING: Silence gaps incomplete - Skipped encoding.")
+        return
+    out_dir = os.path.join("out", os.path.splitext(os.path.basename(wav.filename))[0])
+    os.makedirs(out_dir, exist_ok=True)
+    for i, (start, duration, info) in enumerate(tracks):
+        duration = int(duration * 8 + 7) // 8
+        print(f"Encoding {i+1} of {len(tracks)}")
+        wav.flac_encode(
+            start, duration, os.path.join(out_dir, "%04d.flac" % (i + 1)), info
+        )
 
 
 def fmt_time(seconds: int) -> str:
