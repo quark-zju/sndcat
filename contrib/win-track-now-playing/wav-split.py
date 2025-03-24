@@ -72,16 +72,22 @@ class WavReader:
         assert self.bytes_per_sample == 2
         return array.array("h", sample_bytes)
 
-    def volume(self, samples: array.array):
-        # Calculate the volume.
-        return sum(map(abs, samples)) / len(samples)
+    def max_volume(self, samples: array.array):
+        # Calculate the "max" volume.
+        return max(map(abs, samples))
 
-    def find_silence_around(self, candidate_second, threshold=5) -> None | float:
+    def find_silence_around(
+        self,
+        candidate_second,
+        threshold=15,
+        backwards=25,
+        out_best=None,
+    ) -> None | float:
         candidate_second = fractions.Fraction(int(candidate_second * 8), 8)
-        # best_vol = 1e10
-        # best_second = None
+        best_vol = 1e10
+        best_second = None
         test_duration = 0.125
-        test_backward_seconds = 20
+        test_backward_seconds = backwards
         for offset_int in range(
             0, -int(1 + test_backward_seconds // test_duration), -1
         ):
@@ -89,15 +95,15 @@ class WavReader:
             second = candidate_second + offset
             if second < 0:
                 continue
-            vol = self.volume(self.read(second, test_duration))
+            vol = self.max_volume(self.read(second, test_duration))
             # print(" Volume at %d: %d" % (offset, vol))
+            if vol < best_vol:
+                best_vol = vol
+                best_second = second
+                if out_best is not None:
+                    out_best[:] = (best_vol, best_second)
             if vol < threshold:
                 return second
-            # elif vol < best_vol:
-            #     best_vol = vol
-            #     best_second = second
-        # if best_vol < 100:
-        #     return best_second
         return None
 
     def flac_encode(self, start, duraion, out_path, info=None):
@@ -169,7 +175,14 @@ def main():
         help="The hint of the creation time of the WAV file.",
     )
     parser.add_argument(
-        "-s", "--threshold", type=int, help="The silence threshold.", default=5
+        "-s", "--threshold", type=int, help="The silence threshold.", default=120
+    )
+    parser.add_argument(
+        "-b",
+        "--backwards",
+        type=int,
+        help="Look backwards to find silence (seconds).",
+        default=60,
     )
     opts = parser.parse_args()
     timestamps = list(parse_timestamp_info(opts.timestamps))
@@ -183,7 +196,7 @@ def main():
     tracks = []
     last_start = 0
     last_info = None
-    bad_at = None
+    unknown_offsets = []
     for time, title, info, is_playing in timestamps[start:]:
         if not is_playing:
             continue
@@ -194,36 +207,53 @@ def main():
         print("%s %s" % (fmt_time(time), title))
         if time > wav_length:
             print("  End of WAV file.")
-            if bad_at is None:
-                tracks.append((last_start, wav_length - last_start, last_info))
+            tracks.append(
+                (last_start, wav_length - last_start, last_info, unknown_offsets)
+            )
             break
         if not first:
-            silence_time = wav.find_silence_around(time, opts.threshold)
+            best = []
+            silence_time = wav.find_silence_around(
+                time,
+                opts.threshold,
+                min(opts.backwards, time - last_start),
+                out_best=best,
+            )
             if silence_time is not None:
                 print(
-                    "  Silence gap found at %s %.2f"
+                    f"  Silence gap found at %s %.2f (vol: {best[0]})"
                     % (fmt_time(silence_time), silence_time - time)
                 )
-                if bad_at is None:
-                    tracks.append((last_start, silence_time - last_start, last_info))
+                tracks.append(
+                    (last_start, silence_time - last_start, last_info, unknown_offsets)
+                )
                 last_start = silence_time
+                unknown_offsets = []
             else:
-                print("  NO SILENCE GAP FOUND!")
-                if bad_at is None:
-                    bad_at = (last_start, time)
+                print(
+                    f"  NO SILENCE GAP FOUND! (best vol: {best[0]} at {fmt_time(best[1])})"
+                )
+                unknown_offsets.append(time - last_start)
         last_info = info
         first = False
-    if bad_at is not None:
-        print(
-            "WARNING: Silence gaps incomplete after %s - %s. Need manual check"
-            % (fmt_time(bad_at[0]), fmt_time(bad_at[1]))
-        )
     out_dir = os.path.join("out", os.path.splitext(os.path.basename(wav.filename))[0])
     os.makedirs(out_dir, exist_ok=True)
-    for i, (start, duration, info) in enumerate(tracks):
+    if any(t[-1] for t in tracks):
+        if input("Some gaps cannot be detected. Continue? [y/N] ").lower() != "y":
+            return
+    unknown_count = 0
+    for i, (start, duration, info, unknown_offsets) in enumerate(tracks):
         # duration = int(duration * 8 + 7) // 8
         print(f"Encoding {i+1} of {len(tracks)}")
-        out_path = os.path.join(out_dir, "part%04d.flac" % (i + 1))
+        suffix = "" if not unknown_offsets else "-fixme"
+        out_path = os.path.join(
+            out_dir, "part%04d%s.flac" % (i + 1 + unknown_count, suffix)
+        )
+        if unknown_offsets:
+            unknown_count += len(unknown_offsets)
+            info["title"] += " (unknown gaps: %s)" % ", ".join(
+                map(fmt_time, unknown_offsets)
+            )
         wav.flac_encode(start, duration, out_path, info)
 
 
