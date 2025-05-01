@@ -24,10 +24,14 @@ async def get_media_info():
             PlaybackStatus.CHANGING: "Changing",
         }
         status = status_dict.get(playback_info.playback_status, "Unknown")
+        album = info.album_title
+        artist = info.artist
+        if not album and " \u2014 " in artist:
+            artist, album = artist.split(" \u2014 ", 1)
         return {
             "title": info.title,
-            "artist": info.artist,
-            "album": info.album_title,
+            "artist": artist,
+            "album": album,
             "status": status,
         }
 
