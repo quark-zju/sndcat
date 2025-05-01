@@ -9,6 +9,8 @@ import fractions
 import os
 import bisect
 import subprocess
+import math
+import copy
 
 
 # This is an example of a WAV file header (44 bytes). Data is stored in little-endian byte order.
@@ -138,20 +140,106 @@ class WavReader:
             raise RuntimeError("FLAC encoding failed.")
 
 
-def parse_timestamp_info(filename) -> typing.Iterable[tuple[int, str, object, bool]]:
+def parse_hh_mm_ss_to_seconds(s: str) -> float:
+    result = 0.0
+    if "." in s:
+        s, frac = s.rsplit(".", 1)
+        result += float("0." + frac)
+    parts = s.split(":")
+    for i, part in enumerate(reversed(parts)):
+        result += int(part) * (60**i)
+    return result
+
+
+def parse_timestamp_info(
+    filename: str, fixup: str
+) -> typing.Iterable[tuple[int, str, object, bool]]:
+
+    tracks = []
+    short_titles = set()
     with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             try:
                 obj = json.loads(line)
                 time = obj["time"]
                 info = obj["info"]
-                title = info["title"]
+                title = info["title"].strip()
+                short_titles.add(title)
                 album = info["album"]
                 artist = info["artist"]
                 is_playing = info["status"] == "Playing"
-                yield time, f"{artist}/{album}/{title}", info, is_playing
+                tracks.append((time, f"{artist}/{album}/{title}", info, is_playing))
             except Exception:
                 pass
+
+    # consider fixup to fill missing tracks
+    try:
+        fixups = []
+        with open(fixup, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("#"):
+                    fixups.append(("", 0))
+                try:
+                    title, mm_ss = line.strip().rsplit(maxsplit=1)
+                    title = title.strip()
+                    if title and title[0].isnumeric():
+                        # Might start with a track number.
+                        title = title.split(maxsplit=1)[1].strip()
+                    # duration does not include ".*" part. +1 to avoid rounding errors.
+                    duration = parse_hh_mm_ss_to_seconds(mm_ss.strip()) + 1.0
+                    fixups.append((title, duration))
+                except Exception:
+                    fixups.append(("", 0))
+        new_tracks = []
+        fixup_times = {}
+        fixup_offset = 0
+        for track_idx, track in enumerate(tracks):
+            time, title, info, is_playing = track
+            # time = time + fixup_offset
+            short_title = info["title"]
+            if short_title in fixup_times:
+                new_time = fixup_times[short_title]
+                print("Fixup time %s %s" % (short_title, fmt_time(new_time - time)))
+                time = new_time
+            new_tracks.append((time, title, info, is_playing))
+            if not is_playing:
+                continue
+            for fixup_idx, (fixup_title, fixup_duration) in enumerate(fixups):
+                if fixup_title and fixup_title == short_title:
+                    # apply fixups until a known track
+                    next_time = time + fixup_duration
+                    first_fixup = True
+                    for i in range(fixup_idx + 1, len(fixups)):
+                        fixup_title, fixup_duration = fixups[i]
+                        if not fixup_title or not fixup_duration:
+                            break
+                        if fixup_title in short_titles:
+                            # hit a known track
+                            if not first_fixup and fixup_title not in fixup_times:
+                                for j in range(i, len(fixups)):
+                                    fixup_title, fixup_duration = fixups[j]
+                                    if not fixup_title or not fixup_duration:
+                                        break
+                                    fixup_times[fixup_title] = next_time
+                                    next_time += fixup_duration
+                            fixups = fixups[i:]
+                            break
+                        if first_fixup:
+                            print("Fixup - missing tracks after %s" % short_title)
+                            first_fixup = False
+                        fixup_info = copy.deepcopy(info)
+                        fixup_info["title"] = fixup_title
+                        new_tracks.append(
+                            (next_time, f"FIXUP {fixup_title}", fixup_info, True)
+                        )
+                        print("  %s %s" % (fmt_time(fixup_duration), fixup_title))
+                        next_time += fixup_duration
+                    break
+        tracks = new_tracks
+    except FileNotFoundError:
+        pass
+
+    return tracks
 
 
 def get_file_creation_time(filename):
@@ -165,8 +253,15 @@ def main():
         "-t",
         "--timestamps",
         type=str,
-        help="The track timestamp info.",
+        help="The track timestamp info (generated by windows-track-title.py).",
         default="track.log",
+    )
+    parser.add_argument(
+        "-F",
+        "--fixup",
+        type=str,
+        help="The timestamp fixup ('title MM:SS' per line, in order)",
+        default="fixup.txt",
     )
     parser.add_argument(
         "-c",
@@ -185,7 +280,7 @@ def main():
         default=60,
     )
     opts = parser.parse_args()
-    timestamps = list(parse_timestamp_info(opts.timestamps))
+    timestamps = list(parse_timestamp_info(opts.timestamps, opts.fixup))
     wav_ctime = opts.ctime_hint or get_file_creation_time(opts.filename)
     print("WAV file created at:", wav_ctime)
     wav = WavReader(opts.filename)
