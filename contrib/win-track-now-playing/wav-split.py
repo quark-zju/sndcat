@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+import ast
 import struct
 import argparse
 import array
@@ -160,7 +161,10 @@ def parse_timestamp_info(
     with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             try:
-                obj = json.loads(line)
+                try:
+                    obj = json.loads(line)
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    obj = ast.literal_eval(line)
                 time = obj["time"]
                 info = obj["info"]
                 title = info["title"].strip()

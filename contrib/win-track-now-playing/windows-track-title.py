@@ -44,10 +44,10 @@ async def main():
         except IOError:
             continue
         if last_info != info:
-            s = json.dumps({"time": time.time(), "info": info})
-            with open("track.log", "a") as f:
-                f.write(s)
-                f.write("\n")
+            s = repr({"time": time.time(), "info": info})
+            with open("track.log", "ab") as f:
+                f.write(s.encode("utf-8"))
+                f.write(b"\n")
             print(s)
             last_info = info
         await asyncio.sleep(1)

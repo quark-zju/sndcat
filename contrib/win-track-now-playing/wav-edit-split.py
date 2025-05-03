@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+import ast
 import struct
 import argparse
 import array
@@ -175,7 +176,10 @@ def parse_gaps_txt(filename: str) -> typing.Iterable[tuple[float, float, object]
 
     for i, line in enumerate(rest):
         if line.startswith("{"):
-            obj = json.loads(line)
+            try:
+                obj = json.loads(line)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                obj = ast.literal_eval(line)
             info = obj.get("info", obj)
             title = info["title"].strip()
             album = info["album"]
